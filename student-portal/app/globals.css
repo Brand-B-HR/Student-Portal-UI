@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* forest — dark surfaces */
+  --color-forest-950: #0b2318;
+  --color-forest-900: #0f2e1f;
+  --color-forest-800: #163e29;
+  --color-forest-700: #1c4a30;
+
+  /* leaf — primary accent */
+  --color-leaf-600: #2f8f5b;
+  --color-leaf-500: #3fa66a;
+  --color-leaf-400: #6cc796;
+  --color-leaf-300: #9ddcb9;
+  --color-leaf-100: #d7f0e1;
+
+  /* mint — light backgrounds */
+  --color-mint-100: #e4f5ea;
+  --color-mint-50: #f4faf6;
+  --color-paper: #ffffff;
+
+  /* ink — text */
+  --color-ink-900: #14231b;
+  --color-ink-600: #435449;
+  --color-ink-400: #8a9a8f;
+
+  /* type */
+  --font-display: "Fraunces", ui-serif, serif;
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-mint-100, currentColor);
+  }
+
+  html {
+    min-height: 100%;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(circle at top left, rgba(108, 199, 150, 0.18), transparent 30%),
+      radial-gradient(circle at top right, rgba(63, 166, 106, 0.12), transparent 24%),
+      linear-gradient(180deg, #f8fcf9 0%, #eff8f2 100%);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: #f4faf6;
+    color: #14231b;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(63, 166, 106, 0.18);
+    color: var(--color-ink-900);
+  }
+}
+
+@layer components {
+  .loading-screen {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background-color: #f4faf6;
+    padding: 1.5rem;
+  }
+
+  .spinner {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 9999px;
+    border: 4px solid #d7f0e1;
+    border-top-color: #2f8f5b;
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
