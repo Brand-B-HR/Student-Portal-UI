@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, onAuthStateChanged } from "@/lib/firebase";
 import { bootstrapStudentProfile } from "@/lib/api";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {

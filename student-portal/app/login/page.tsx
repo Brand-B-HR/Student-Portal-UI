@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
+import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
 import { bootstrapStudentProfile } from "@/lib/api";
 
 export default function LoginPage() {
@@ -21,7 +20,7 @@ export default function LoginPage() {
         bootstrapStudentProfile()
           .catch(() => undefined)
           .finally(() => {
-            router.replace("/dashboard");
+            router.replace("/upload");
           });
       }
     });
@@ -36,7 +35,7 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       await bootstrapStudentProfile();
-      router.replace("/dashboard");
+      router.replace("/upload");
     } catch (e: any) {
       setError(e.message ?? "Sign-in failed. Please try again.");
     } finally {
@@ -57,7 +56,7 @@ export default function LoginPage() {
 
       await bootstrapStudentProfile();
 
-      router.replace("/dashboard");
+      router.replace("/upload");
     } catch (e: any) {
       setError(e.message ?? "Authentication failed. Please try again.");
     } finally {

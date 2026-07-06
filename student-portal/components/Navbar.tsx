@@ -1,12 +1,29 @@
 "use client";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { auth, signOut } from "@/lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
   const user = auth.currentUser;
+  const [hasCv, setHasCv] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const data = localStorage.getItem("mock_student_profile");
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed?.currentCv?.fileName) {
+            setHasCv(true);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   async function handleSignOut() {
     await signOut(auth);
@@ -30,9 +47,14 @@ export default function Navbar() {
           <Link href="/dashboard" className="rounded-2xl border border-leaf-200 bg-white px-3 py-2 transition hover:border-leaf-400 hover:bg-mint-50 hover:text-forest-900">
             Dashboard
           </Link>
-          <Link href="/upload" className="rounded-2xl border border-leaf-200 bg-white px-3 py-2 transition hover:border-leaf-400 hover:bg-mint-50 hover:text-forest-900">
-            Upload CV
+          <Link href="/profile" className="rounded-2xl border border-leaf-200 bg-white px-3 py-2 transition hover:border-leaf-400 hover:bg-mint-50 hover:text-forest-900">
+            My CV & Profile
           </Link>
+          {!hasCv && (
+            <Link href="/upload" className="rounded-2xl border border-leaf-200 bg-white px-3 py-2 transition hover:border-leaf-400 hover:bg-mint-50 hover:text-forest-900">
+              Upload CV
+            </Link>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

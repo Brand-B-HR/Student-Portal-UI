@@ -3,27 +3,27 @@
 
 @theme {
   /* forest — dark surfaces */
-  --color-forest-950: #0b2318;
-  --color-forest-900: #0f2e1f;
-  --color-forest-800: #163e29;
-  --color-forest-700: #1c4a30;
+  --color-forest-950: #2d1305;
+  --color-forest-900: #3b1a07;
+  --color-forest-800: #4d230b;
+  --color-forest-700: #5f2d10;
 
   /* leaf — primary accent */
-  --color-leaf-600: #2f8f5b;
-  --color-leaf-500: #3fa66a;
-  --color-leaf-400: #6cc796;
-  --color-leaf-300: #9ddcb9;
-  --color-leaf-100: #d7f0e1;
+  --color-leaf-600: #ea580c;
+  --color-leaf-500: #f97316;
+  --color-leaf-400: #fb923c;
+  --color-leaf-300: #fdba74;
+  --color-leaf-100: #ffedd5;
 
   /* mint — light backgrounds */
-  --color-mint-100: #e4f5ea;
-  --color-mint-50: #f4faf6;
+  --color-mint-100: #fed7aa;
+  --color-mint-50: #fff7ed;
   --color-paper: #ffffff;
 
   /* ink — text */
-  --color-ink-900: #14231b;
-  --color-ink-600: #435449;
-  --color-ink-400: #8a9a8f;
+  --color-ink-900: #2c1810;
+  --color-ink-600: #5c473e;
+  --color-ink-400: #9c8375;
 
   /* type */
   --font-display: "Fraunces", ui-serif, serif;
@@ -43,21 +43,21 @@
     min-height: 100%;
     font-family: var(--font-sans);
     background:
-      radial-gradient(circle at top left, rgba(108, 199, 150, 0.18), transparent 30%),
-      radial-gradient(circle at top right, rgba(63, 166, 106, 0.12), transparent 24%),
-      linear-gradient(180deg, #f8fcf9 0%, #eff8f2 100%);
+      radial-gradient(circle at top left, rgba(249, 115, 22, 0.15), transparent 30%),
+      radial-gradient(circle at top right, rgba(234, 88, 12, 0.1), transparent 24%),
+      linear-gradient(180deg, #fffbf7 0%, #fff5ea 100%);
   }
 
   body {
     min-height: 100vh;
-    background-color: #f4faf6;
-    color: #14231b;
+    background-color: #fff7ed;
+    color: #2c1810;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: rgba(63, 166, 106, 0.18);
+    background: rgba(249, 115, 22, 0.18);
     color: var(--color-ink-900);
   }
 }
@@ -68,7 +68,7 @@
     min-height: 100vh;
     align-items: center;
     justify-content: center;
-    background-color: #f4faf6;
+    background-color: #fff7ed;
     padding: 1.5rem;
   }
 
@@ -76,8 +76,8 @@
     height: 2.5rem;
     width: 2.5rem;
     border-radius: 9999px;
-    border: 4px solid #d7f0e1;
-    border-top-color: #2f8f5b;
+    border: 4px solid #ffedd5;
+    border-top-color: #ea580c;
     animation: spin 0.9s linear infinite;
   }
 }

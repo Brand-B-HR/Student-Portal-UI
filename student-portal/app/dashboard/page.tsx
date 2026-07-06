@@ -1,144 +1,301 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Navbar from "@/components/Navbar";
 import { auth } from "@/lib/firebase";
-import Link from "next/link";
-import { downloadMyStudentCv, getMyStudentCv } from "@/lib/api";
+
+interface Job {
+  id: number;
+  title: string;
+  company: string;
+  logo: string;
+  location: string;
+  salary: string;
+  type: string;
+  tags: string[];
+}
+
+interface BlogPost {
+  id: number;
+  title: string;
+  summary: string;
+  category: string;
+  readTime: string;
+  date: string;
+  image: string;
+}
 
 export default function DashboardPage() {
   const user = auth.currentUser;
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [openingCv, setOpeningCv] = useState(false);
+  const firstName = user?.displayName?.split(" ")[0] ?? "Student";
 
-  useEffect(() => {
-    (async () => {
-      const response = await getMyStudentCv();
-      if (!response.ok) {
-        setLoading(false);
-        return;
-      }
-
-      setData(await response.json());
-      setLoading(false);
-    })();
-  }, []);
-
-  const currentCv = data?.currentCv;
-  const reviews = currentCv?.reviews ?? [];
-  const latestVisibleReview = reviews.find((review: any) => review.feedback) ?? reviews[0];
-
-  async function handleOpenCv() {
-    setOpeningCv(true);
-    try {
-      const response = await downloadMyStudentCv();
-      if (!response.ok) return;
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } finally {
-      setOpeningCv(false);
+  // Mock Job Postings
+  const [jobs, setJobs] = useState<Job[]>([
+    {
+      id: 1,
+      title: "Software Engineering Intern",
+      company: "Google",
+      logo: "💻",
+      location: "Mountain View, CA (Hybrid)",
+      salary: "$45 - $55 / hr",
+      type: "Internship",
+      tags: ["React", "Python", "C++"]
+    },
+    {
+      id: 2,
+      title: "Junior Frontend Developer",
+      company: "TechCorp Solutions",
+      logo: "⚛️",
+      location: "Remote (US)",
+      salary: "$85,000 - $105,000",
+      type: "Full-Time",
+      tags: ["Next.js", "TypeScript", "Tailwind"]
+    },
+    {
+      id: 3,
+      title: "UX/UI Designer Intern",
+      company: "Figma",
+      logo: "🎨",
+      location: "San Francisco, CA (Hybrid)",
+      salary: "$40 - $48 / hr",
+      type: "Internship",
+      tags: ["Figma", "Design Systems", "Prototyping"]
+    },
+    {
+      id: 4,
+      title: "Backend Engineer",
+      company: "Stripe",
+      logo: "💳",
+      location: "Seattle, WA (Onsite)",
+      salary: "$130,000 - $155,000",
+      type: "Full-Time",
+      tags: ["Ruby on Rails", "Go", "SQL"]
+    },
+    {
+      id: 5,
+      title: "Full Stack Engineer",
+      company: "Vercel",
+      logo: "▲",
+      location: "Remote (Global)",
+      salary: "$110,000 - $135,000",
+      type: "Full-Time",
+      tags: ["Next.js", "Node.js", "Serverless"]
+    },
+    {
+      id: 6,
+      title: "Mobile App Developer Intern",
+      company: "SwiftKey",
+      logo: "📱",
+      location: "New York, NY (Hybrid)",
+      salary: "$35 - $42 / hr",
+      type: "Internship",
+      tags: ["React Native", "iOS", "Android"]
     }
-  }
+  ]);
 
-  const firstName = user?.displayName?.split(" ")[0] ?? data?.student?.fullName?.split(" ")[0] ?? "Student";
+  // Mock Career Guidance Blogs
+  const [blogs] = useState<BlogPost[]>([
+    {
+      id: 1,
+      title: "Mastering the Technical Coding Interview in 2026",
+      summary: "A comprehensive roadmap outlining key algorithms, system design paradigms, and soft-skill templates to stand out in technical assessments.",
+      category: "Interview Prep",
+      readTime: "6 min read",
+      date: "July 2, 2026",
+      image: "🎯"
+    },
+    {
+      id: 2,
+      title: "Quantifying Achievements on a Resume",
+      summary: "Learn how to use metrics, action-oriented verbs, and business impact formulas to optimize your resume bullets for ATS screening.",
+      category: "Resume Tips",
+      readTime: "8 min read",
+      date: "June 28, 2026",
+      image: "✍️"
+    },
+    {
+      id: 3,
+      title: "Leveraging LinkedIn for Referrals & Outreach",
+      summary: "A step-by-step messaging framework to connect with engineering leads and secure warm internal referrals for open positions.",
+      category: "Networking",
+      readTime: "5 min read",
+      date: "June 15, 2026",
+      image: "🤝"
+    }
+  ]);
+
+  // State to track applied job IDs
+  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+
+  function handleApply(jobId: number) {
+    if (appliedJobs.includes(jobId)) return;
+    setAppliedJobs((prev) => [...prev, jobId]);
+  }
 
   return (
     <AuthGuard>
       <Navbar />
       <main className="min-h-[calc(100vh-4rem)] bg-mint-50 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl space-y-5">
-          <div className="rounded-3xl bg-gradient-to-br from-forest-900 to-forest-700 p-6 shadow-[0_20px_50px_-15px_rgba(15,46,31,0.4)] sm:p-7">
-            <p className="text-sm text-leaf-300">Welcome back</p>
-            <h1 className="font-display mt-1 text-2xl font-semibold text-white sm:text-3xl">{firstName}</h1>
-            <p className="mt-2 max-w-md text-sm leading-6 text-mint-100/80">
-              Track your CV status, preview the PDF, and read reviewer feedback.
-            </p>
-          </div>
+        <div className="mx-auto max-w-7xl space-y-6">
+          
+          {/* Three-Column Dashboard Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* Left/Center Column (8 cols): Job Postings Box Grid */}
+            <div className="lg:col-span-8 space-y-5">
+              <div className="flex items-center justify-between border-b border-orange-100 pb-2">
+                <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
+                  <span>💼</span> Open Job Postings
+                </h2>
+                <span className="text-xs bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-bold">
+                  {jobs.length} Opportunities
+                </span>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-mint-100 bg-white p-5 shadow-sm">
-              <div className="text-xs font-semibold tracking-wider text-ink-400 uppercase">CV status</div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-forest-900">
-                <span className={`h-2 w-2 rounded-full ${currentCv ? "bg-leaf-500" : "bg-ink-400/40"}`} />
-                {currentCv?.status ?? "No CV yet"}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="group rounded-2xl border border-orange-100 bg-white p-5 shadow-sm transition hover:border-orange-300 hover:shadow-md flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-2xl group-hover:scale-105 transition-transform">
+                          {job.logo}
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          job.type === "Internship" ? "bg-orange-100 text-orange-800" : "bg-forest-900 text-orange-100"
+                        }`}>
+                          {job.type}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3.5 text-base font-bold text-forest-900 leading-tight">
+                        {job.title}
+                      </h3>
+                      <p className="text-sm font-semibold text-orange-600 mt-1">
+                        {job.company}
+                      </p>
+
+                      <div className="mt-4 space-y-2 text-xs text-ink-600">
+                        <div className="flex items-center gap-1.5">
+                          <span>📍</span> {job.location}
+                        </div>
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <span>💵</span> {job.salary}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {job.tags.map((tag) => (
+                          <span key={tag} className="rounded bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700 border border-orange-100/50">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleApply(job.id)}
+                      className={`mt-5 w-full rounded-xl py-2.5 text-xs font-semibold transition border ${
+                        appliedJobs.includes(job.id)
+                          ? "bg-forest-900 text-white border-forest-900 cursor-default"
+                          : "bg-white text-orange-600 border-orange-200 hover:bg-orange-600 hover:text-white hover:border-orange-600"
+                      }`}
+                    >
+                      {appliedJobs.includes(job.id) ? "✓ Applied" : "Quick Apply"}
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="rounded-2xl border border-mint-100 bg-white p-5 shadow-sm">
-              <div className="text-xs font-semibold tracking-wider text-ink-400 uppercase">File size</div>
-              <div className="mt-2 text-lg font-semibold text-forest-900">
-                {currentCv ? `${currentCv.fileSizeKB} KB` : "—"}
-              </div>
-            </div>
-          </div>
 
-          <div className="rounded-2xl border border-mint-100 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-forest-900">Your CV</div>
-                <div className="text-xs text-ink-400">One active PDF per student</div>
-              </div>
-              <Link
-                href="/upload"
-                className="rounded-xl bg-leaf-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-forest-700"
-              >
-                Upload
-              </Link>
-            </div>
+            {/* Right Side Column (4 cols): Ad Banners & Career Blogs */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Ad Banners */}
+              <div className="space-y-4">
+                <div className="border-b border-orange-100 pb-2">
+                  <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
+                    <span>📢</span> Recommended Services
+                  </h2>
+                </div>
 
-            {loading ? (
-              <div className="mt-4 rounded-xl bg-mint-50 px-4 py-5 text-sm text-ink-400">Loading CV details…</div>
-            ) : currentCv ? (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-xl bg-mint-50 px-4 py-4">
-                  <div className="text-sm font-medium text-forest-900">{currentCv.fileName}</div>
-                  <div className="mt-1 text-xs text-ink-400">
-                    Uploaded {new Date(currentCv.uploadedAt).toLocaleDateString()}
+                <div className="space-y-3">
+                  {/* Banner 1 */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-600 to-orange-500 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
+                    <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
+                      🎯
+                    </div>
+                    <div className="relative z-10">
+                      <span className="bg-white/20 text-white rounded px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">Bootcamp</span>
+                      <h4 className="mt-2 font-bold text-base leading-tight">Mock Interview prep with Tech Leads</h4>
+                      <p className="text-xs text-orange-100/90 mt-1 max-w-[200px]">Get real feedback & optimize code structure.</p>
+                    </div>
+                    <div className="mt-3 text-xs font-bold bg-white text-orange-600 rounded-lg py-2 px-3 self-start shadow hover:bg-orange-50 transition">
+                      Enroll Today
+                    </div>
+                  </div>
+
+                  {/* Banner 2 */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-forest-900 to-forest-800 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
+                    <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
+                      📝
+                    </div>
+                    <div className="relative z-10">
+                      <span className="bg-white/20 text-white rounded px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">Premium Review</span>
+                      <h4 className="mt-2 font-bold text-base leading-tight">CV Audit by Senior Recruiters</h4>
+                      <p className="text-xs text-orange-100/90 mt-1 max-w-[200px]">Unlock more callbacks with specialized screening audits.</p>
+                    </div>
+                    <div className="mt-3 text-xs font-bold bg-orange-600 text-white rounded-lg py-2 px-3 self-start shadow hover:bg-orange-700 transition">
+                      Submit for Audit
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    onClick={handleOpenCv}
-                    disabled={openingCv}
-                    className="rounded-xl border border-mint-100 bg-white px-4 py-3 text-center text-sm font-semibold text-forest-900 transition hover:border-leaf-400 hover:bg-mint-50 disabled:opacity-50"
-                  >
-                    {openingCv ? "Opening…" : "Open PDF"}
-                  </button>
-                  <Link
-                    href="/upload"
-                    className="rounded-xl border border-mint-100 bg-white px-4 py-3 text-center text-sm font-semibold text-forest-900 transition hover:border-leaf-400 hover:bg-mint-50"
-                  >
-                    Replace CV
-                  </Link>
+              {/* Career Guidance Blogs */}
+              <div className="space-y-4">
+                <div className="border-b border-orange-100 pb-2">
+                  <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
+                    <span>📰</span> Career Blogs
+                  </h2>
+                </div>
+
+                <div className="space-y-4">
+                  {blogs.map((blog) => (
+                    <div
+                      key={blog.id}
+                      className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm hover:border-orange-200 hover:shadow-md transition duration-200"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded bg-orange-100 px-2.5 py-0.5 text-[10px] font-bold text-orange-800 uppercase tracking-wide">
+                          {blog.category}
+                        </span>
+                        <span className="text-[10px] text-ink-400 font-medium">{blog.readTime}</span>
+                      </div>
+                      
+                      <h3 className="mt-3 text-base font-bold text-forest-900 leading-snug hover:text-orange-600 transition-colors cursor-pointer">
+                        {blog.title}
+                      </h3>
+                      
+                      <p className="mt-2 text-xs text-ink-600 leading-relaxed line-clamp-3">
+                        {blog.summary}
+                      </p>
+
+                      <div className="mt-4 flex items-center justify-between text-[11px] text-ink-400 border-t border-orange-50/50 pt-3">
+                        <span>Calendar: {blog.date}</span>
+                        <span className="text-orange-600 font-bold hover:underline cursor-pointer">Read Article →</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="mt-4 rounded-xl bg-mint-50 px-4 py-5 text-sm text-ink-400">
-                No CV uploaded yet. Go to upload and add your PDF.
-              </div>
-            )}
-          </div>
 
-          <div className="rounded-2xl border border-mint-100 bg-white p-5 shadow-sm sm:p-6">
-            <div className="text-sm font-semibold text-forest-900">Feedback</div>
-            <div className="mt-1 text-xs text-ink-400">Latest visible review from the admin team</div>
-            {latestVisibleReview ? (
-              <div className="mt-4 space-y-3 rounded-xl bg-mint-50 px-4 py-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-ink-600">Score</span>
-                  <span className="font-semibold text-leaf-600">{latestVisibleReview.score}/10</span>
-                </div>
-                <p className="text-sm leading-6 text-ink-900">
-                  {latestVisibleReview.feedback ?? "Feedback is hidden by the reviewer."}
-                </p>
-              </div>
-            ) : (
-              <div className="mt-4 rounded-xl bg-mint-50 px-4 py-5 text-sm text-ink-400">No feedback yet.</div>
-            )}
+            </div>
+
           </div>
         </div>
       </main>
