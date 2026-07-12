@@ -3,7 +3,6 @@
 import { useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Navbar from "@/components/Navbar";
-import { auth } from "@/lib/firebase";
 
 interface Job {
   id: number;
@@ -27,11 +26,8 @@ interface BlogPost {
 }
 
 export default function DashboardPage() {
-  const user = auth.currentUser;
-  const firstName = user?.displayName?.split(" ")[0] ?? "Student";
-
   // Mock Job Postings
-  const [jobs, setJobs] = useState<Job[]>([
+  const [jobs] = useState<Job[]>([
     {
       id: 1,
       title: "Software Engineering Intern",
@@ -94,7 +90,6 @@ export default function DashboardPage() {
     }
   ]);
 
-  // Mock Career Guidance Blogs
   const [blogs] = useState<BlogPost[]>([
     {
       id: 1,
@@ -125,9 +120,7 @@ export default function DashboardPage() {
     }
   ]);
 
-  // State to track applied job IDs
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
-
   function handleApply(jobId: number) {
     if (appliedJobs.includes(jobId)) return;
     setAppliedJobs((prev) => [...prev, jobId]);
@@ -138,11 +131,11 @@ export default function DashboardPage() {
       <Navbar />
       <main className="min-h-[calc(100vh-4rem)] bg-mint-50 px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          
+
           {/* Three-Column Dashboard Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {/* Left/Center Column (8 cols): Job Postings Box Grid */}
+
+            {/* Left/Center Column (8 cols): Job Postings */}
             <div className="lg:col-span-8 space-y-5">
               <div className="flex items-center justify-between border-b border-orange-100 pb-2">
                 <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
@@ -212,9 +205,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Right Side Column (4 cols): Ad Banners & Career Blogs */}
+            {/* Right Side Column (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
-              
+
               {/* Ad Banners */}
               <div className="space-y-4">
                 <div className="border-b border-orange-100 pb-2">
@@ -224,7 +217,6 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Banner 1 */}
                   <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-600 to-orange-500 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
                     <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
                       🎯
@@ -239,7 +231,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Banner 2 */}
                   <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-forest-900 to-forest-800 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
                     <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
                       📝
@@ -276,17 +267,17 @@ export default function DashboardPage() {
                         </span>
                         <span className="text-[10px] text-ink-400 font-medium">{blog.readTime}</span>
                       </div>
-                      
+
                       <h3 className="mt-3 text-base font-bold text-forest-900 leading-snug hover:text-orange-600 transition-colors cursor-pointer">
                         {blog.title}
                       </h3>
-                      
+
                       <p className="mt-2 text-xs text-ink-600 leading-relaxed line-clamp-3">
                         {blog.summary}
                       </p>
 
                       <div className="mt-4 flex items-center justify-between text-[11px] text-ink-400 border-t border-orange-50/50 pt-3">
-                        <span>Calendar: {blog.date}</span>
+                        <span>{blog.date}</span>
                         <span className="text-orange-600 font-bold hover:underline cursor-pointer">Read Article →</span>
                       </div>
                     </div>

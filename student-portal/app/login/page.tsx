@@ -4,15 +4,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
 import { bootstrapStudentProfile } from "@/lib/api";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Signup extra fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [university, setUniversity] = useState("");
+  const [degree, setDegree] = useState("");
+  const [graduationYear, setGraduationYear] = useState("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -24,20 +32,18 @@ export default function LoginPage() {
           });
       }
     });
-
     return () => unsub();
   }, [router]);
 
   async function handleGoogleLogin() {
     setLoading(true);
-    setError("");
-
     try {
       await signInWithGoogle();
       await bootstrapStudentProfile();
+      toast.success("Signed in with Google!");
       router.replace("/upload");
-    } catch (e: any) {
-      setError(e.message ?? "Sign-in failed. Please try again.");
+    } catch (e: unknown) {
+      toast.error((e as Error).message ?? "Sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,20 +51,31 @@ export default function LoginPage() {
 
   async function handleEmailAuth() {
     setLoading(true);
-    setError("");
-
     try {
       if (mode === "signup") {
+        if (!firstName.trim() || !lastName.trim()) {
+          toast.error("First and last name are required.");
+          return;
+        }
         await signUpWithEmail(email.trim(), password);
+        await bootstrapStudentProfile({
+          email: email.trim(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim() || undefined,
+          university: university.trim() || undefined,
+          degree: degree.trim() || undefined,
+          graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+        });
+        toast.success("Account created! Welcome aboard.");
       } else {
         await signInWithEmail(email.trim(), password);
+        await bootstrapStudentProfile();
+        toast.success("Signed in successfully!");
       }
-
-      await bootstrapStudentProfile();
-
       router.replace("/upload");
-    } catch (e: any) {
-      setError(e.message ?? "Authentication failed. Please try again.");
+    } catch (e: unknown) {
+      toast.error((e as Error).message ?? "Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -138,15 +155,16 @@ export default function LoginPage() {
         {/* Form panel */}
         <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-12 sm:py-12">
           <div className="w-full max-w-sm">
-            <h1 className="font-display text-2xl font-semibold text-forest-900 sm:text-[28px]">Welcome back</h1>
-            <p className="mt-1.5 text-sm text-ink-600">Sign in with email or Google to continue.</p>
+            <h1 className="font-display text-2xl font-semibold text-forest-900 sm:text-[28px]">
+              {mode === "login" ? "Welcome back" : "Create account"}
+            </h1>
+            <p className="mt-1.5 text-sm text-ink-600">
+              {mode === "login"
+                ? "Sign in with email or Google to continue."
+                : "Sign up to upload your CV and get feedback."}
+            </p>
 
-            {error && (
-              <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-[13px] text-rose-700">
-                {error}
-              </div>
-            )}
-
+            {/* Mode toggle */}
             <div className="mt-6 flex gap-1 rounded-xl bg-mint-100 p-1">
               <button
                 type="button"
@@ -169,6 +187,100 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6 space-y-4 text-left">
+              {/* Signup-only fields */}
+              {mode === "signup" && (
+                <>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label htmlFor="firstName" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                        First Name
+                      </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        placeholder="Jane"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label htmlFor="lastName" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                        Last Name
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        placeholder="Smith"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="phone" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                      Phone <span className="text-ink-400 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      placeholder="+1 555 000 0000"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="university" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                      University <span className="text-ink-400 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      id="university"
+                      type="text"
+                      placeholder="State University"
+                      value={university}
+                      onChange={(e) => setUniversity(e.target.value)}
+                      className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label htmlFor="degree" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                        Degree <span className="text-ink-400 font-normal">(opt.)</span>
+                      </label>
+                      <input
+                        id="degree"
+                        type="text"
+                        placeholder="BSc Computer Science"
+                        value={degree}
+                        onChange={(e) => setDegree(e.target.value)}
+                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label htmlFor="gradYear" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                        Grad Year
+                      </label>
+                      <input
+                        id="gradYear"
+                        type="number"
+                        placeholder="2026"
+                        min="2020"
+                        max="2035"
+                        value={graduationYear}
+                        onChange={(e) => setGraduationYear(e.target.value)}
+                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Email */}
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
                   Email address
@@ -189,6 +301,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* Password */}
               <div>
                 <label htmlFor="password" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
                   Password

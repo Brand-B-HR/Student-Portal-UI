@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import { useRouter } from "next/navigation";
-import { uploadStudentCv, saveStudentProfile, getMyStudentCv } from "@/lib/api";
+import {
+  getCvUploadUrl,
+  confirmCvUpload,
+  getVideoUploadUrl,
+  confirmVideoUpload,
+  uploadToAzureBlob,
+} from "@/lib/api";
+import { toast } from "react-toastify";
 
 interface Job {
   title: string;
@@ -48,6 +55,7 @@ export default function UploadPage() {
   const [step, setStep] = useState<"upload" | "wizard">("upload");
   const [parsing, setParsing] = useState(false);
   const [parsingStepText, setParsingStepText] = useState("Uploading file...");
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // File states
   const [file, setFile] = useState<File | null>(null);
@@ -79,23 +87,6 @@ export default function UploadPage() {
       skills: []
     }
   });
-
-  // Load existing profile details as initial wizard mock fallback
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await getMyStudentCv();
-        if (res.ok) {
-          const data = await res.json();
-          if (data) {
-            setProfileData(data);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load initial profile data", e);
-      }
-    })();
-  }, []);
 
   // Cleanup file url on unmount
   useEffect(() => {
@@ -156,85 +147,68 @@ export default function UploadPage() {
     setErrorMessage("");
   }
 
-  // Trigger fake AI parsing
+  // Real Azure Blob upload via backend-generated SAS URL
   async function handleProceed() {
     if (!file) return;
 
     setParsing(true);
+    setUploadProgress(0);
     setStep("wizard");
     setWizardStep(1);
 
     const stages = [
-      "Uploading file securely...",
-      "Analyzing document structure with AI...",
-      "Running OCR text extraction...",
-      "Identifying work history and dates...",
-      "Extracting educational milestones...",
-      "Detecting professional skills..."
+      "Requesting secure upload URL...",
+      "Uploading file to Azure Blob Storage...",
+      "Confirming upload with server...",
+      "Processing complete!"
     ];
-
-    let stageIdx = 0;
     setParsingStepText(stages[0]);
 
-    const interval = setInterval(() => {
-      stageIdx++;
-      if (stageIdx < stages.length) {
-        setParsingStepText(stages[stageIdx]);
-      } else {
-        clearInterval(interval);
+    try {
+      if (fileType === "pdf") {
+        // CV upload flow
+        setParsingStepText(stages[0]);
+        const { uploadUrl, storageKey } = await getCvUploadUrl(
+          file.name,
+          file.type,
+          file.size
+        );
+
+        setParsingStepText(stages[1]);
+        await uploadToAzureBlob(uploadUrl, file, (pct) => setUploadProgress(pct));
+
+        setParsingStepText(stages[2]);
+        await confirmCvUpload(file.name, storageKey, file.size, file.type);
+
+        toast.success("CV uploaded successfully!");
+      } else if (fileType === "video") {
+        // Video upload flow
+        setParsingStepText(stages[0]);
+        const { uploadUrl, storageKey } = await getVideoUploadUrl(
+          file.name,
+          file.type,
+          file.size
+        );
+
+        setParsingStepText(stages[1]);
+        await uploadToAzureBlob(uploadUrl, file, (pct) => setUploadProgress(pct));
+
+        setParsingStepText(stages[2]);
+        await confirmVideoUpload(file.name, storageKey, file.size, file.type);
+
+        toast.success("Video uploaded successfully!");
       }
-    }, 400);
 
-    await uploadStudentCv(file);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      
-      setProfileData((prev) => ({
-        student: {
-          fullName: prev.student.fullName || "Alex Rivera",
-          email: prev.student.email || "alex.rivera@university.edu",
-          phone: prev.student.phone || "+1 (555) 019-2834",
-          location: prev.student.location || "San Francisco, CA",
-          linkedin: prev.student.linkedin || "linkedin.com/in/alex-rivera",
-          portfolio: prev.student.portfolio || "alexrivera.dev"
-        },
-        currentCv: {
-          fileName: file.name,
-          fileSizeKB: Math.round(file.size / 1024),
-          uploadedAt: new Date().toISOString(),
-          status: "Under Review",
-          experience: prev.currentCv.experience.length > 0 ? prev.currentCv.experience : [
-            {
-              title: "Software Engineering Intern",
-              company: "TechCorp Solutions",
-              startDate: "June 2025",
-              endDate: "Present",
-              description: "Developed and maintained responsive web applications using React and Next.js. Improved page load speed by 35% through image optimization and code splitting. Collaborated with cross-functional teams to deliver critical user-facing features."
-            },
-            {
-              title: "Web Developer",
-              company: "University Design Studio",
-              startDate: "September 2024",
-              endDate: "May 2025",
-              description: "Designed and implemented website features for various university departments. Managed database integration and API services."
-            }
-          ],
-          education: prev.currentCv.education.length > 0 ? prev.currentCv.education : [
-            {
-              degree: "Bachelor of Science in Computer Science",
-              institution: "State University",
-              graduationYear: "2026"
-            }
-          ],
-          skills: prev.currentCv.skills.length > 0 ? prev.currentCv.skills : [
-            "React", "Next.js", "TypeScript", "Tailwind CSS", "JavaScript", "HTML5", "Node.js", "Python", "Git"
-          ]
-        }
-      }));
-
+      setParsingStepText(stages[3]);
+      // Redirect to dashboard after short delay so user sees success state
+      setTimeout(() => router.push("/dashboard"), 1500);
+    } catch (err: unknown) {
+      toast.error((err as Error).message ?? "Upload failed. Please try again.");
+      setStep("upload");
+    } finally {
       setParsing(false);
-    }, 2400);
+      setUploadProgress(0);
+    }
   }
 
   // Handle Form changes
@@ -348,9 +322,9 @@ export default function UploadPage() {
     setNewSkill("");
   }
 
-  // Submit profile to dashboard
-  async function handleSubmit() {
-    await saveStudentProfile(profileData);
+  // Navigate to dashboard after wizard
+  function handleSubmit() {
+    toast.success("Profile saved! Redirecting to dashboard...");
     router.push("/dashboard");
   }
 
@@ -517,14 +491,28 @@ export default function UploadPage() {
         {step === "wizard" && (
           <div className="flex-1 flex flex-col min-h-0 w-full">
             {parsing ? (
-              /* AI Parsing Spinner */
+              /* Upload Spinner with Progress */
               <div className="flex-1 flex flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-sm">
                 <div className="relative flex h-16 w-16 items-center justify-center">
                   <div className="absolute h-full w-full rounded-full border-4 border-orange-100 border-t-orange-600 animate-spin" />
-                  <span className="text-xl">✨</span>
+                  <span className="text-xl">☁️</span>
                 </div>
-                <h2 className="mt-5 text-base font-bold text-forest-900">AI Profile Autofilling</h2>
+                <h2 className="mt-5 text-base font-bold text-forest-900">Uploading to Azure</h2>
                 <p className="mt-1.5 text-xs text-ink-600 animate-pulse">{parsingStepText}</p>
+                {uploadProgress > 0 && (
+                  <div className="mt-4 w-64">
+                    <div className="flex justify-between text-[11px] text-ink-400 mb-1">
+                      <span>Upload progress</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-orange-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-orange-600 transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* Full Width, Locked Viewport Split screen */
