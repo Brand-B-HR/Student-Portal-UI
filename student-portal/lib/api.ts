@@ -62,6 +62,33 @@ export interface CvUploadUrlResponse {
   expiresInMinutes: number;
 }
 
+export interface ExtractedCvData {
+  status: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  linkedIn?: string;
+  github?: string;
+  skills?: string[];
+  education?: string[];
+  experience?: string[];
+  rawTextLength?: number;
+  message?: string;
+}
+
+export interface CvRecord {
+  id: number;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  version: number;
+  isActive: boolean;
+  feedbackStatus: string;
+  extractionStatus: string;
+  extractedDataJson?: string;
+  uploadedAt: string;
+}
+
 export async function getCvUploadUrl(
   fileName: string,
   mimeType: string,
@@ -79,21 +106,46 @@ export async function getCvUploadUrl(
   return res.json();
 }
 
+export interface CvConfirmResponse {
+  id: number;
+  fileName: string;
+  extractionStatus: string;
+  extractedDataJson?: string;
+}
+
 export async function confirmCvUpload(
   fileName: string,
   storageKey: string,
   fileSize: number,
   mimeType: string
-): Promise<void> {
+): Promise<CvConfirmResponse> {
   const res = await fetch(`${API}/api/student/cv/confirm`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, storageKey, fileSize, mimeType }),
   });
   if (!res.ok) throw new Error(`CV confirm failed: ${res.status}`);
+  return res.json();
 }
 
-export async function getActiveCv(): Promise<{ cv: unknown; downloadUrl: string } | null> {
+export interface SaveProfilePayload {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  university?: string;
+  reviewedDataJson?: string;
+}
+
+export async function saveProfile(payload: SaveProfilePayload): Promise<void> {
+  const res = await fetch(`${API}/api/student/cv/save-profile`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Save profile failed: ${res.status}`);
+}
+
+export async function getActiveCv(): Promise<{ cv: CvRecord; downloadUrl: string } | null> {
   const res = await fetch(`${API}/api/student/cv/active`, {
     headers: await authHeaders(),
   });

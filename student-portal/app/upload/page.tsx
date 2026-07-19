@@ -9,6 +9,8 @@ import {
   getVideoUploadUrl,
   confirmVideoUpload,
   uploadToAzureBlob,
+  saveProfile,
+  ExtractedCvData,
 } from "@/lib/api";
 import { toast } from "react-toastify";
 
@@ -88,6 +90,12 @@ export default function UploadPage() {
     }
   });
 
+  // Raw extracted data returned from confirm endpoint (used to seed the wizard)
+  const [extractedData, setExtractedData] = useState<ExtractedCvData | null>(null);
+
+  // Note: No automatic redirect here — users can intentionally come from
+  // the dashboard to re-upload/update their CV.
+
   // Cleanup file url on unmount
   useEffect(() => {
     return () => {
@@ -159,14 +167,13 @@ export default function UploadPage() {
     const stages = [
       "Requesting secure upload URL...",
       "Uploading file to Azure Blob Storage...",
-      "Confirming upload with server...",
+      "Extracting CV data with AI...",
       "Processing complete!"
     ];
     setParsingStepText(stages[0]);
 
     try {
       if (fileType === "pdf") {
-        // CV upload flow
         setParsingStepText(stages[0]);
         const { uploadUrl, storageKey } = await getCvUploadUrl(
           file.name,
@@ -178,11 +185,43 @@ export default function UploadPage() {
         await uploadToAzureBlob(uploadUrl, file, (pct) => setUploadProgress(pct));
 
         setParsingStepText(stages[2]);
-        await confirmCvUpload(file.name, storageKey, file.size, file.type);
+        // confirm now returns extracted JSON — use it to pre-fill the wizard
+        const confirmed = await confirmCvUpload(file.name, storageKey, file.size, file.type);
 
-        toast.success("CV uploaded successfully!");
+        if (confirmed.extractedDataJson) {
+          try {
+            const parsed: ExtractedCvData = JSON.parse(confirmed.extractedDataJson);
+            setExtractedData(parsed);
+
+            // Pre-fill student fields
+            setProfileData((prev) => ({
+              ...prev,
+              student: {
+                ...prev.student,
+                fullName:  parsed.name      ?? prev.student.fullName,
+                email:     parsed.email     ?? prev.student.email,
+                phone:     parsed.phone     ?? prev.student.phone,
+                linkedin:  parsed.linkedIn  ?? prev.student.linkedin,
+                portfolio: parsed.github    ?? prev.student.portfolio,
+              },
+              currentCv: {
+                ...prev.currentCv,
+                fileName:  file.name,
+                skills:    parsed.skills    ?? [],
+                education: (parsed.education ?? []).map((line) => ({
+                  degree: line, institution: "", graduationYear: ""
+                })),
+                experience: (parsed.experience ?? []).map((line) => ({
+                  title: "", company: "", startDate: "", endDate: "",
+                  description: line
+                })),
+              }
+            }));
+          } catch { /* ignore JSON parse error — wizard stays empty */ }
+        }
+
+        toast.success("CV uploaded and extracted!");
       } else if (fileType === "video") {
-        // Video upload flow
         setParsingStepText(stages[0]);
         const { uploadUrl, storageKey } = await getVideoUploadUrl(
           file.name,
@@ -197,11 +236,11 @@ export default function UploadPage() {
         await confirmVideoUpload(file.name, storageKey, file.size, file.type);
 
         toast.success("Video uploaded successfully!");
+        setTimeout(() => router.push("/dashboard"), 1000);
+        return;
       }
 
       setParsingStepText(stages[3]);
-      // Redirect to dashboard after short delay so user sees success state
-      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (err: unknown) {
       toast.error((err as Error).message ?? "Upload failed. Please try again.");
       setStep("upload");
@@ -322,10 +361,31 @@ export default function UploadPage() {
     setNewSkill("");
   }
 
-  // Navigate to dashboard after wizard
-  function handleSubmit() {
-    toast.success("Profile saved! Redirecting to dashboard...");
-    router.push("/dashboard");
+  // Submit reviewed profile → persist to DB → go to dashboard
+  async function handleSubmit() {
+    try {
+      await saveProfile({
+        fullName:        profileData.student.fullName  || undefined,
+        email:           profileData.student.email     || undefined,
+        phone:           profileData.student.phone     || undefined,
+        university:      profileData.student.location  || undefined,
+        reviewedDataJson: extractedData
+          ? JSON.stringify({
+              ...extractedData,
+              name:     profileData.student.fullName,
+              email:    profileData.student.email,
+              phone:    profileData.student.phone,
+              linkedIn: profileData.student.linkedin,
+              github:   profileData.student.portfolio,
+              skills:   profileData.currentCv.skills,
+            })
+          : undefined,
+      });
+      toast.success("Profile saved! Redirecting to dashboard...");
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      toast.error((err as Error).message ?? "Failed to save profile.");
+    }
   }
 
   const inputStyle = "w-full border-b-2 border-orange-200 bg-orange-50/20 px-3.5 py-2.5 text-sm text-ink-900 rounded-t-lg outline-none transition focus:border-orange-500 focus:bg-orange-50/40 hover:bg-orange-50/30";

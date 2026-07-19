@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
-import { bootstrapStudentProfile } from "@/lib/api";
+import { bootstrapStudentProfile, getActiveCv } from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   // Signup extra fields
   const [firstName, setFirstName] = useState("");
@@ -22,26 +23,35 @@ export default function LoginPage() {
   const [degree, setDegree] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
 
+  async function redirectAfterAuth() {
+    try {
+      await bootstrapStudentProfile();
+      const activeCv = await getActiveCv();
+      if (activeCv) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/upload");
+      }
+    } catch {
+      router.replace("/upload");
+    }
+  }
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        bootstrapStudentProfile()
-          .catch(() => undefined)
-          .finally(() => {
-            router.replace("/upload");
-          });
+      if (user && !isSigningUp) {
+        redirectAfterAuth();
       }
     });
     return () => unsub();
-  }, [router]);
+  }, [router, isSigningUp]);
 
   async function handleGoogleLogin() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      await bootstrapStudentProfile();
+      // onAuthStateChanged listener handles redirection
       toast.success("Signed in with Google!");
-      router.replace("/upload");
     } catch (e: unknown) {
       toast.error((e as Error).message ?? "Sign-in failed. Please try again.");
     } finally {
@@ -57,6 +67,7 @@ export default function LoginPage() {
           toast.error("First and last name are required.");
           return;
         }
+        setIsSigningUp(true);
         await signUpWithEmail(email.trim(), password);
         await bootstrapStudentProfile({
           email: email.trim(),
@@ -68,13 +79,14 @@ export default function LoginPage() {
           graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
         });
         toast.success("Account created! Welcome aboard.");
+        router.replace("/upload");
       } else {
         await signInWithEmail(email.trim(), password);
-        await bootstrapStudentProfile();
+        // onAuthStateChanged listener handles redirection
         toast.success("Signed in successfully!");
       }
-      router.replace("/upload");
     } catch (e: unknown) {
+      setIsSigningUp(false);
       toast.error((e as Error).message ?? "Authentication failed. Please try again.");
     } finally {
       setLoading(false);

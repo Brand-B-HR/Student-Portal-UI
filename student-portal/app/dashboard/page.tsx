@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import AuthGuard from "@/components/AuthGuard";
 import Navbar from "@/components/Navbar";
 
@@ -207,6 +208,29 @@ export default function DashboardPage() {
 
             {/* Right Side Column (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
+
+              {/* Update CV Banner */}
+              <Link href="/upload" className="block group">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-leaf-600 to-forest-700 p-5 text-white shadow-md hover:shadow-xl transition-shadow duration-300 flex items-center gap-4">
+                  <div className="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-300 select-none">
+                    📄
+                  </div>
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 text-2xl">
+                    🔄
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-white/70">CV Management</p>
+                    <h3 className="text-sm font-bold leading-tight mt-0.5">Update Your CV</h3>
+                    <p className="text-xs text-white/80 mt-1">Upload a new version to replace your current CV.</p>
+                  </div>
+                  <div className="ml-auto flex-shrink-0 relative z-10">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 stroke-white/70 fill-none stroke-2 group-hover:translate-x-1 transition-transform duration-200">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
 
               {/* Ad Banners */}
               <div className="space-y-4">
