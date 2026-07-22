@@ -9,21 +9,30 @@
   --color-forest-700: #5f2d10;
 
   /* leaf — primary accent */
-  --color-leaf-600: #ea580c;
-  --color-leaf-500: #f97316;
-  --color-leaf-400: #fb923c;
-  --color-leaf-300: #fdba74;
-  --color-leaf-100: #ffedd5;
+  --color-leaf-600: #cf8114;
+  --color-leaf-500: #ef9f26;
+  --color-leaf-400: #f2b251;
+  --color-leaf-300: #f6c57d;
+  --color-leaf-100: #fdf2e1;
 
   /* mint — light backgrounds */
-  --color-mint-100: #fed7aa;
-  --color-mint-50: #fff7ed;
+  --color-mint-100: #fde7c8;
+  --color-mint-50: #fffaf3;
   --color-paper: #ffffff;
 
   /* ink — text */
   --color-ink-900: #2c1810;
   --color-ink-600: #5c473e;
   --color-ink-400: #9c8375;
+
+  /* override tailwind orange colors to keep consistency */
+  --color-orange-50: #fffaf3;
+  --color-orange-100: #fdf2e1;
+  --color-orange-200: #fde7c8;
+  --color-orange-300: #f6c57d;
+  --color-orange-400: #f2b251;
+  --color-orange-500: #ef9f26;
+  --color-orange-600: #cf8114;
 
   /* type */
   --font-display: "Fraunces", ui-serif, serif;
@@ -43,21 +52,21 @@
     min-height: 100%;
     font-family: var(--font-sans);
     background:
-      radial-gradient(circle at top left, rgba(249, 115, 22, 0.15), transparent 30%),
-      radial-gradient(circle at top right, rgba(234, 88, 12, 0.1), transparent 24%),
-      linear-gradient(180deg, #fffbf7 0%, #fff5ea 100%);
+      radial-gradient(circle at top left, rgba(239, 159, 38, 0.15), transparent 30%),
+      radial-gradient(circle at top right, rgba(207, 129, 20, 0.1), transparent 24%),
+      linear-gradient(180deg, #fffbf7 0%, #fffaf3 100%);
   }
 
   body {
     min-height: 100vh;
-    background-color: #fff7ed;
+    background-color: #fffaf3;
     color: #2c1810;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: rgba(249, 115, 22, 0.18);
+    background: rgba(239, 159, 38, 0.18);
     color: var(--color-ink-900);
   }
 }
@@ -68,7 +77,7 @@
     min-height: 100vh;
     align-items: center;
     justify-content: center;
-    background-color: #fff7ed;
+    background-color: #fffaf3;
     padding: 1.5rem;
   }
 
@@ -76,8 +85,8 @@
     height: 2.5rem;
     width: 2.5rem;
     border-radius: 9999px;
-    border: 4px solid #ffedd5;
-    border-top-color: #ea580c;
+    border: 4px solid #fdf2e1;
+    border-top-color: #cf8114;
     animation: spin 0.9s linear infinite;
   }
 }

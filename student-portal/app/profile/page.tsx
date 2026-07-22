@@ -251,8 +251,8 @@ export default function ProfilePage() {
                           { label: "Name",     value: extracted.name,     icon: "👤", link: false },
                           { label: "Email",    value: extracted.email,    icon: "✉️", link: false },
                           { label: "Phone",    value: extracted.phone,    icon: "📞", link: false },
-                          { label: "LinkedIn", value: extracted.linkedIn, icon: "🔗", link: true, href: extracted.linkedIn ? `https://${extracted.linkedIn}` : undefined },
-                          { label: "GitHub",   value: extracted.github,   icon: "🐙", link: true, href: extracted.github ? `https://${extracted.github}` : undefined },
+                          { label: "LinkedIn", value: extracted.links?.linkedIn, icon: "🔗", link: true, href: extracted.links?.linkedIn ? `https://${extracted.links.linkedIn}` : undefined },
+                          { label: "GitHub",   value: extracted.links?.github,   icon: "🐙", link: true, href: extracted.links?.github ? `https://${extracted.links.github}` : undefined },
                         ].map(({ label, value, icon, link, href }) => (
                           <div key={label} className="rounded-xl border border-orange-100 bg-orange-50/30 px-4 py-3">
                             <span className="text-[10px] font-semibold text-ink-400 uppercase tracking-wider flex items-center gap-1">
@@ -299,8 +299,14 @@ export default function ProfilePage() {
                           🎓 Education
                         </h4>
                         <div className="rounded-xl border border-orange-100 bg-orange-50/20 divide-y divide-orange-100">
-                          {extracted.education.map((line, i) => (
-                            <p key={i} className="px-4 py-3 text-sm text-ink-700 leading-relaxed">{line}</p>
+                          {extracted.education.map((edu, i) => (
+                            <div key={i} className="px-4 py-3 text-sm text-ink-700 leading-relaxed">
+                              <div className="font-semibold text-forest-900">{edu.degree || "Degree/Education"}</div>
+                              <div className="text-xs text-ink-600 mt-0.5">
+                                {edu.institution && <span>{edu.institution}</span>}
+                                {edu.graduationYear && <span> • {edu.graduationYear}</span>}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -313,8 +319,19 @@ export default function ProfilePage() {
                           💼 Work Experience
                         </h4>
                         <div className="rounded-xl border border-orange-100 bg-orange-50/20 divide-y divide-orange-100 max-h-80 overflow-y-auto">
-                          {extracted.experience.map((line, i) => (
-                            <p key={i} className="px-4 py-3 text-sm text-ink-700 leading-relaxed">{line}</p>
+                          {extracted.experience.map((exp, i) => (
+                            <div key={i} className="px-4 py-3 text-sm text-ink-700 leading-relaxed space-y-1">
+                              <div className="font-semibold text-forest-900">{exp.title || "Job Title"}</div>
+                              <div className="text-xs text-ink-600">
+                                {exp.company && <span>{exp.company}</span>}
+                                {(exp.startDate || exp.endDate) && (
+                                  <span> • {exp.startDate || ""} - {exp.endDate || ""}</span>
+                                )}
+                              </div>
+                              {exp.description && (
+                                <p className="text-xs text-ink-600 mt-1 leading-normal whitespace-pre-line">{exp.description}</p>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>

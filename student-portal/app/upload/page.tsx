@@ -410,8 +410,8 @@ export default function UploadPage() {
             <div className="w-full max-w-4xl space-y-5">
               <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-forest-900 to-forest-700 p-6 shadow-[0_20px_50px_-15px_rgba(45,19,5,0.4)] sm:p-7 text-center flex-shrink-0">
                 <svg className="pointer-events-none absolute -top-14 -right-14 h-56 w-56 opacity-20" viewBox="0 0 200 200" fill="none">
-                  <circle cx="100" cy="100" r="90" stroke="#fb923c" strokeWidth="1.5" />
-                  <circle cx="100" cy="100" r="65" stroke="#f97316" strokeWidth="1.5" />
+                  <circle cx="100" cy="100" r="90" stroke="#f2b251" strokeWidth="1.5" />
+                  <circle cx="100" cy="100" r="65" stroke="#ef9f26" strokeWidth="1.5" />
                 </svg>
                 
                 <div className="relative z-10 space-y-1.5">
@@ -602,7 +602,7 @@ export default function UploadPage() {
                     </span>
                   </div>
 
-                  <div className="flex-1 overflow-hidden rounded-2xl border-2 border-orange-200 bg-white shadow-md min-h-0 relative">
+                  <div className="hidden lg:block flex-1 overflow-hidden rounded-2xl border-2 border-orange-200 bg-white shadow-md min-h-0 relative">
                     {fileType === "pdf" && fileUrl ? (
                       <iframe 
                         src={`${fileUrl}#toolbar=0&navpanes=0`} 

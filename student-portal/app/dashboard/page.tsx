@@ -138,6 +138,58 @@ export default function DashboardPage() {
 
             {/* Left/Center Column (8 cols): Job Postings */}
             <div className="lg:col-span-8 space-y-5">
+              
+              {/* Mobile Sticky Ads Slider (Only on Mobile/Tablet) */}
+              <div className="lg:hidden sticky top-[64px] z-30 bg-[#fffaf3]/95 backdrop-blur-md pt-2 pb-4 -mx-4 px-4 border-b border-orange-100/50 shadow-xs">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-ink-400 mb-2">Recommended Services</p>
+                <div 
+                  className="flex overflow-x-auto gap-3 snap-x pb-1"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {/* Mock Interview */}
+                  <div className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-600 to-orange-500 p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
+                    <div className="absolute right-0 bottom-0 text-5xl opacity-15 translate-x-2 translate-y-2">
+                      🎯
+                    </div>
+                    <div className="relative z-10">
+                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">Bootcamp</span>
+                      <h4 className="mt-1 font-bold text-xs leading-tight">Mock Interview prep with Tech Leads</h4>
+                    </div>
+                    <div className="mt-2 text-[10px] font-bold bg-white text-orange-600 rounded px-2.5 py-1 self-start shadow">
+                      Enroll Today
+                    </div>
+                  </div>
+
+                  {/* CV Audit */}
+                  <div className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-forest-900 to-forest-800 p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
+                    <div className="absolute right-0 bottom-0 text-5xl opacity-15 translate-x-2 translate-y-2">
+                      📝
+                    </div>
+                    <div className="relative z-10">
+                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">Premium Review</span>
+                      <h4 className="mt-1 font-bold text-xs leading-tight">CV Audit by Senior Recruiters</h4>
+                    </div>
+                    <div className="mt-2 text-[10px] font-bold bg-orange-600 text-white rounded px-2.5 py-1 self-start shadow">
+                      Submit for Audit
+                    </div>
+                  </div>
+
+                  {/* Update CV Banner */}
+                  <Link href="/upload" className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-leaf-600 to-forest-700 p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
+                    <div className="absolute -right-3 -bottom-3 text-6xl opacity-10">
+                      📄
+                    </div>
+                    <div className="relative z-10">
+                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">CV Management</span>
+                      <h4 className="mt-1 font-bold text-xs leading-tight">Update Your CV</h4>
+                    </div>
+                    <div className="mt-2 text-[10px] font-bold bg-white/20 text-white rounded px-2.5 py-1 self-start shadow">
+                      Replace CV
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between border-b border-orange-100 pb-2">
                 <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
                   <span>💼</span> Open Job Postings
@@ -147,7 +199,56 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mobile Compact Job List (Hidden on desktop/tablet) */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {jobs.map((job) => (
+                  <div 
+                    key={job.id} 
+                    className="flex items-start gap-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm hover:border-orange-200 transition"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50 text-2xl">
+                      {job.logo}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <h4 className="text-sm font-bold text-forest-900 truncate">{job.title}</h4>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-850 flex-shrink-0">
+                          {job.type}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-orange-600 mt-0.5">{job.company}</p>
+                      
+                      <div className="mt-2.5 flex items-center gap-2 text-[10px] text-ink-600 flex-wrap">
+                        <span>📍 {job.location}</span>
+                        <span>💵 {job.salary}</span>
+                      </div>
+                      
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {job.tags.slice(0, 3).map((tag) => (
+                          <span key={tag} className="rounded bg-orange-50/70 px-1.5 py-0.5 text-[9px] font-semibold text-orange-700 border border-orange-100/30">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => handleApply(job.id)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition flex-shrink-0 self-center ${
+                        appliedJobs.includes(job.id)
+                          ? "bg-forest-900 text-white"
+                          : "bg-white text-orange-600 border border-orange-200 hover:bg-orange-600 hover:text-white"
+                      }`}
+                    >
+                      {appliedJobs.includes(job.id) ? "✓" : "Apply"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop/Tablet Grid Card View (Hidden on mobile) */}
+              <div className="hidden md:grid md:grid-cols-2 gap-4">
                 {jobs.map((job) => (
                   <div
                     key={job.id}
@@ -209,31 +310,33 @@ export default function DashboardPage() {
             {/* Right Side Column (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
 
-              {/* Update CV Banner */}
-              <Link href="/upload" className="block group">
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-leaf-600 to-forest-700 p-5 text-white shadow-md hover:shadow-xl transition-shadow duration-300 flex items-center gap-4">
-                  <div className="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-300 select-none">
-                    📄
+              {/* Update CV Banner (Hidden on Mobile) */}
+              <div className="hidden lg:block">
+                <Link href="/upload" className="block group">
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-leaf-600 to-forest-700 p-5 text-white shadow-md hover:shadow-xl transition-shadow duration-300 flex items-center gap-4">
+                    <div className="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-300 select-none">
+                      📄
+                    </div>
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 text-2xl">
+                      🔄
+                    </div>
+                    <div className="relative z-10">
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-white/70">CV Management</p>
+                      <h3 className="text-sm font-bold leading-tight mt-0.5">Update Your CV</h3>
+                      <p className="text-xs text-white/80 mt-1">Upload a new version to replace your current CV.</p>
+                    </div>
+                    <div className="ml-auto flex-shrink-0 relative z-10">
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 stroke-white/70 fill-none stroke-2 group-hover:translate-x-1 transition-transform duration-200">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </div>
                   </div>
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 text-2xl">
-                    🔄
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-white/70">CV Management</p>
-                    <h3 className="text-sm font-bold leading-tight mt-0.5">Update Your CV</h3>
-                    <p className="text-xs text-white/80 mt-1">Upload a new version to replace your current CV.</p>
-                  </div>
-                  <div className="ml-auto flex-shrink-0 relative z-10">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 stroke-white/70 fill-none stroke-2 group-hover:translate-x-1 transition-transform duration-200">
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
 
-              {/* Ad Banners */}
-              <div className="space-y-4">
+              {/* Ad Banners (Hidden on Mobile) */}
+              <div className="hidden lg:block space-y-4">
                 <div className="border-b border-orange-100 pb-2">
                   <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
                     <span>📢</span> Recommended Services
@@ -271,8 +374,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Career Guidance Blogs */}
-              <div className="space-y-4">
+              {/* Career Guidance Blogs (Always visible) */}
+              <div id="blogs" className="space-y-4 scroll-mt-20">
                 <div className="border-b border-orange-100 pb-2">
                   <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
                     <span>📰</span> Career Blogs
