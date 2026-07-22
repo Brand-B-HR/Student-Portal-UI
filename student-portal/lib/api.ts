@@ -62,20 +62,39 @@ export interface CvUploadUrlResponse {
   expiresInMinutes: number;
 }
 
+export interface CvExperienceItem {
+  title?: string;
+  company?: string;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+}
+
+export interface CvEducationItem {
+  degree?: string;
+  institution?: string;
+  graduationYear?: string;
+}
+
+export interface CvLinks {
+  linkedIn?: string;
+  github?: string;
+  portfolio?: string;
+  other?: string[];
+}
+
 export interface ExtractedCvData {
   status: string;
   name?: string;
   email?: string;
   phone?: string;
-  linkedIn?: string;
-  github?: string;
+  location?: string;
+  links?: CvLinks;
   skills?: string[];
-  education?: string[];
-  experience?: string[];
+  education?: CvEducationItem[];
+  experience?: CvExperienceItem[];
   rawTextLength?: number;
-  message?: string;
 }
-
 export interface CvRecord {
   id: number;
   fileName: string;

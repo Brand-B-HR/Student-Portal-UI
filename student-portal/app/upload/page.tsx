@@ -188,38 +188,42 @@ export default function UploadPage() {
         // confirm now returns extracted JSON — use it to pre-fill the wizard
         const confirmed = await confirmCvUpload(file.name, storageKey, file.size, file.type);
 
-        if (confirmed.extractedDataJson) {
-          try {
-            const parsed: ExtractedCvData = JSON.parse(confirmed.extractedDataJson);
-            setExtractedData(parsed);
+       if (confirmed.extractedDataJson) {
+  try {
+    const parsed: ExtractedCvData = JSON.parse(confirmed.extractedDataJson);
+    setExtractedData(parsed);
 
-            // Pre-fill student fields
-            setProfileData((prev) => ({
-              ...prev,
-              student: {
-                ...prev.student,
-                fullName:  parsed.name      ?? prev.student.fullName,
-                email:     parsed.email     ?? prev.student.email,
-                phone:     parsed.phone     ?? prev.student.phone,
-                linkedin:  parsed.linkedIn  ?? prev.student.linkedin,
-                portfolio: parsed.github    ?? prev.student.portfolio,
-              },
-              currentCv: {
-                ...prev.currentCv,
-                fileName:  file.name,
-                skills:    parsed.skills    ?? [],
-                education: (parsed.education ?? []).map((line) => ({
-                  degree: line, institution: "", graduationYear: ""
-                })),
-                experience: (parsed.experience ?? []).map((line) => ({
-                  title: "", company: "", startDate: "", endDate: "",
-                  description: line
-                })),
-              }
-            }));
-          } catch { /* ignore JSON parse error — wizard stays empty */ }
-        }
-
+    setProfileData((prev) => ({
+      ...prev,
+      student: {
+        ...prev.student,
+        fullName:  parsed.name             ?? prev.student.fullName,
+        email:     parsed.email            ?? prev.student.email,
+        phone:     parsed.phone            ?? prev.student.phone,
+        location:  parsed.location         ?? prev.student.location,
+        linkedin:  parsed.links?.linkedIn  ?? prev.student.linkedin,
+        portfolio: parsed.links?.portfolio ?? parsed.links?.github ?? prev.student.portfolio,
+      },
+      currentCv: {
+        ...prev.currentCv,
+        fileName: file.name,
+        skills:   parsed.skills ?? [],
+        education: (parsed.education ?? []).map((e) => ({
+          degree: e.degree ?? "",
+          institution: e.institution ?? "",
+          graduationYear: e.graduationYear ?? "",
+        })),
+        experience: (parsed.experience ?? []).map((e) => ({
+          title: e.title ?? "",
+          company: e.company ?? "",
+          startDate: e.startDate ?? "",
+          endDate: e.endDate ?? "",
+          description: e.description ?? "",
+        })),
+      }
+    }));
+  } catch { /* ignore JSON parse error — wizard stays empty */ }
+}
         toast.success("CV uploaded and extracted!");
       } else if (fileType === "video") {
         setParsingStepText(stages[0]);
@@ -363,30 +367,36 @@ export default function UploadPage() {
 
   // Submit reviewed profile → persist to DB → go to dashboard
   async function handleSubmit() {
-    try {
-      await saveProfile({
-        fullName:        profileData.student.fullName  || undefined,
-        email:           profileData.student.email     || undefined,
-        phone:           profileData.student.phone     || undefined,
-        university:      profileData.student.location  || undefined,
-        reviewedDataJson: extractedData
-          ? JSON.stringify({
-              ...extractedData,
-              name:     profileData.student.fullName,
-              email:    profileData.student.email,
-              phone:    profileData.student.phone,
-              linkedIn: profileData.student.linkedin,
-              github:   profileData.student.portfolio,
-              skills:   profileData.currentCv.skills,
-            })
-          : undefined,
-      });
-      toast.success("Profile saved! Redirecting to dashboard...");
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      toast.error((err as Error).message ?? "Failed to save profile.");
-    }
+  try {
+    await saveProfile({
+      fullName:   profileData.student.fullName  || undefined,
+      email:      profileData.student.email     || undefined,
+      phone:      profileData.student.phone     || undefined,
+      university: profileData.student.location  || undefined,
+      reviewedDataJson: JSON.stringify({
+        status: "reviewed",
+        name: profileData.student.fullName,
+        email: profileData.student.email,
+        phone: profileData.student.phone,
+        location: profileData.student.location,
+        links: {
+          linkedIn: profileData.student.linkedin,
+          github: extractedData?.links?.github,
+          portfolio: profileData.student.portfolio,
+          other: extractedData?.links?.other ?? [],
+        },
+        skills: profileData.currentCv.skills,
+        education: profileData.currentCv.education,
+        experience: profileData.currentCv.experience,
+        rawTextLength: extractedData?.rawTextLength,
+      }),
+    });
+    toast.success("Profile saved! Redirecting to dashboard...");
+    router.push("/dashboard");
+  } catch (err: unknown) {
+    toast.error((err as Error).message ?? "Failed to save profile.");
   }
+}
 
   const inputStyle = "w-full border-b-2 border-orange-200 bg-orange-50/20 px-3.5 py-2.5 text-sm text-ink-900 rounded-t-lg outline-none transition focus:border-orange-500 focus:bg-orange-50/40 hover:bg-orange-50/30";
 
