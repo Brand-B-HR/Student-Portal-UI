@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* forest — dark surfaces */
+  --color-forest-950: #2d1305;
+  --color-forest-900: #3b1a07;
+  --color-forest-800: #4d230b;
+  --color-forest-700: #5f2d10;
+
+  /* leaf — primary accent */
+  --color-leaf-600: #cf8114;
+  --color-leaf-500: #ef9f26;
+  --color-leaf-400: #f2b251;
+  --color-leaf-300: #f6c57d;
+  --color-leaf-100: #fdf2e1;
+
+  /* mint — light backgrounds */
+  --color-mint-100: #fde7c8;
+  --color-mint-50: #fffaf3;
+  --color-paper: #ffffff;
+
+  /* ink — text */
+  --color-ink-900: #2c1810;
+  --color-ink-600: #5c473e;
+  --color-ink-400: #9c8375;
+
+  /* override tailwind orange colors to keep consistency */
+  --color-orange-50: #fffaf3;
+  --color-orange-100: #fdf2e1;
+  --color-orange-200: #fde7c8;
+  --color-orange-300: #f6c57d;
+  --color-orange-400: #f2b251;
+  --color-orange-500: #ef9f26;
+  --color-orange-600: #cf8114;
+
+  /* type */
+  --font-display: "Fraunces", ui-serif, serif;
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    min-height: 100%;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(circle at top left, rgba(239, 159, 38, 0.15), transparent 30%),
+      radial-gradient(circle at top right, rgba(207, 129, 20, 0.1), transparent 24%),
+      linear-gradient(180deg, #fffbf7 0%, #fffaf3 100%);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: #fffaf3;
+    color: #2c1810;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(239, 159, 38, 0.18);
+    color: var(--color-ink-900);
+  }
+}
+
+@layer components {
+  .loading-screen {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background-color: #fffaf3;
+    padding: 1.5rem;
+  }
+
+  .spinner {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 9999px;
+    border: 4px solid #fdf2e1;
+    border-top-color: #cf8114;
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Blog Article HTML Prose Styles */
+.prose-blog {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #2c1810;
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: #1a2e1a;
+    margin-top: 1.8em;
+    margin-bottom: 0.8em;
+    line-height: 1.3;
+  }
+
+  h1 { font-size: 1.875rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+
+  p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
+  a {
+    color: #cf8114;
+    text-decoration: underline;
+    font-weight: 500;
+
+    &:hover {
+      color: #b06a0c;
+    }
+  }
+
+  ul, ol {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+  }
+
+  ul { list-style-type: disc; }
+  ol { list-style-type: decimal; }
+
+  li {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+  }
+
+  blockquote {
+    border-left: 4px solid #f2b251;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #5c473e;
+    margin: 1.5em 0;
+    background: rgba(254, 231, 200, 0.2);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0 8px 8px 0;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 1.5em 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  figure {
+    margin: 1.5em 0;
+    text-align: center;
+
+    img {
+      margin: 0 auto;
+    }
+
+    figcaption {
+      font-size: 0.875rem;
+      color: #9c8375;
+      margin-top: 0.5rem;
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+
+    th, td {
+      border: 1px solid #fde7c8;
+      padding: 0.625rem 0.875rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #fdf2e1;
+      font-weight: 600;
+      color: #3b1a07;
+    }
+  }
+
+  pre, code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  code {
+    background: #fdf2e1;
+    color: #3b1a07;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.875em;
+  }
+
+  pre {
+    background: #1e1e1e;
+    color: #fdf2e1;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+
+    code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+  }
+}
+
+/* ── Blog article rich content (Quill HTML output) ─────────────── */
+.blog-content {
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: #2c1810;
+
+  p  { margin: 0 0 1.2em; }
+
+  h1 { font-size: 2rem;   font-weight: 800; line-height: 1.2; color: #1a2e1a; margin: 1.2em 0 0.5em; }
+  h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; color: #1a2e1a; margin: 1.2em 0 0.5em; border-bottom: 2px solid #fdf2e1; padding-bottom: 0.3em; }
+  h3 { font-size: 1.2rem; font-weight: 700; line-height: 1.4; color: #2c1810; margin: 1em 0 0.4em; }
+
+  strong, b { font-weight: 700; color: #1a2e1a; }
+  em, i     { font-style: italic; }
+  u         { text-decoration: underline; }
+  s         { text-decoration: line-through; color: #9c8375; }
+
+  /* Quill alignment classes */
+  .ql-align-center  { text-align: center; }
+  .ql-align-right   { text-align: right; }
+  .ql-align-justify { text-align: justify; }
+
+  /* Quill font size classes */
+  .ql-size-small { font-size: 0.85em; }
+  .ql-size-large { font-size: 1.25em; }
+  .ql-size-huge  { font-size: 1.7em; }
+
+  ol, ul { margin: 0 0 1.2em; padding-left: 1.8em; }
+  ol { list-style: decimal; }
+  ul { list-style: disc; }
+  li { margin-bottom: 0.4em; }
+
+  blockquote {
+    border-left: 4px solid #ef9f26;
+    background: #fffaf3;
+    padding: 12px 20px;
+    margin: 1.5em 0;
+    border-radius: 0 8px 8px 0;
+    color: #5c473e;
+    font-style: italic;
+  }
+
+  pre.ql-syntax {
+    background: #1e1e1e;
+    color: #fdf2e1;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.875em;
+    overflow-x: auto;
+    margin: 1.2em 0;
+  }
+
+  a {
+    color: #cf8114;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    &:hover { color: #3b1a07; }
+  }
+
+  /* Inline images inserted by Quill.
+     We keep max-width and border-radius as safe defaults but do NOT
+     override width/height/margin so that inline styles from the
+     image editor (resize + alignment) are preserved. */
+  img {
+    display: block;
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    /* margin intentionally omitted — inline style controls alignment */
+  }
+
+  /* Quill indent classes */
+  .ql-indent-1 { padding-left:  3em; }
+  .ql-indent-2 { padding-left:  6em; }
+  .ql-indent-3 { padding-left:  9em; }
+  .ql-indent-4 { padding-left: 12em; }
+}
