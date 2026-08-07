@@ -27,7 +27,7 @@ export default function Navbar() {
       {/* Desktop Navbar Layout (Hidden on Mobile) */}
       <div className="hidden lg:flex mx-auto max-w-6xl items-center justify-between w-full">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-900 text-xl text-white shadow-sm">🎓</span>
+          <img src="/logo.png" alt="StudentCV Portal" className="h-10 w-10 rounded-2xl object-contain bg-forest-900 p-1 shadow-sm" />
           <div>
             <div className="text-sm font-semibold tracking-tight text-forest-900 sm:text-base">StudentCV Portal</div>
             <div className="text-xs text-ink-400">Upload, review, and track your CV</div>
@@ -81,7 +81,7 @@ export default function Navbar() {
 
         {/* Center: Brand Name */}
         <div className="flex items-center gap-2">
-          <span className="text-lg">🎓</span>
+          <img src="/logo.png" alt="StudentCV Portal" className="h-7 w-7 rounded-xl object-contain" />
           <span className="font-display font-semibold tracking-tight text-forest-900 text-base">
             StudentCV Portal
           </span>
@@ -144,7 +144,7 @@ export default function Navbar() {
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-orange-50">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎓</span>
+                  <img src="/logo.png" alt="StudentCV Portal" className="h-7 w-7 rounded-xl object-contain" />
                   <span className="font-display font-semibold text-forest-900 text-base">StudentCV Portal</span>
                 </div>
                 <button 
