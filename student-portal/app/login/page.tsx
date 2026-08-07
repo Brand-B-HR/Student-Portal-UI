@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
-import { bootstrapStudentProfile, getActiveCv } from "@/lib/api";
+import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail } from "@/lib/firebase";
+import { bootstrapStudentProfile, getActiveCv, ApiError } from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -32,7 +32,17 @@ export default function LoginPage() {
       } else {
         router.replace("/upload");
       }
-    } catch {
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.status === 403) {
+        router.replace("/verify-email");
+        return;
+      }
+      if (e instanceof ApiError && e.status === 409) {
+        toast.error(e.message);
+        await signOut();
+        router.replace("/login");
+        return;
+      }
       router.replace("/upload");
     }
   }
@@ -69,17 +79,32 @@ export default function LoginPage() {
         }
         setIsSigningUp(true);
         await signUpWithEmail(email.trim(), password);
-        await bootstrapStudentProfile({
-          email: email.trim(),
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          phone: phone.trim() || undefined,
-          university: university.trim() || undefined,
-          degree: degree.trim() || undefined,
-          graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
-        });
-        toast.success("Account created! Welcome aboard.");
-        router.replace("/upload");
+        try {
+          await bootstrapStudentProfile({
+            email: email.trim(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phone.trim() || undefined,
+            university: university.trim() || undefined,
+            degree: degree.trim() || undefined,
+            graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+          });
+          toast.success("Account created! Welcome aboard.");
+          router.replace("/upload");
+        } catch (e: unknown) {
+          if (e instanceof ApiError && e.status === 403) {
+            toast.success("Account created! Check your email to verify your account.");
+            router.replace("/verify-email");
+            return;
+          }
+          if (e instanceof ApiError && e.status === 409) {
+            toast.error(e.message);
+            await signOut();
+            setIsSigningUp(false);
+            return;
+          }
+          throw e;
+        }
       } else {
         await signInWithEmail(email.trim(), password);
         // onAuthStateChanged listener handles redirection
@@ -87,7 +112,8 @@ export default function LoginPage() {
       }
     } catch (e: unknown) {
       setIsSigningUp(false);
-      toast.error((e as Error).message ?? "Authentication failed. Please try again.");
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      toast.error(message ?? "Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
