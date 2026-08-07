@@ -10,7 +10,31 @@ async function authHeaders(): Promise<Record<string, string>> {
   };
 }
 
-/* ─── Bootstrap / Profile ──────────────────────────────────────── */
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+async function throwApiError(res: Response, fallback: string): Promise<never> {
+  let message = fallback;
+  try {
+    const body = await res.json();
+    if (body?.message) {
+      message = body.message;
+    } else if (body?.errors && typeof body.errors === "object") {
+      // ASP.NET [ApiController] model validation (ValidationProblemDetails)
+      message = Object.values(body.errors).flat().join(" ") || message;
+    }
+  } catch {
+    // response had no JSON body
+  }
+  throw new ApiError(res.status, message);
+}
+
 
 export interface BootstrapPayload {
   email?: string;
@@ -33,6 +57,7 @@ export interface StudentDto {
   degree?: string;
   graduationYear?: number;
   status: string;
+  wasCreated: boolean;
 }
 
 export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): Promise<StudentDto> {
@@ -41,20 +66,10 @@ export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): P
     headers: await authHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Bootstrap failed: ${res.status}`);
+  if (!res.ok) return throwApiError(res, `Bootstrap failed: ${res.status}`);
   return res.json();
 }
 
-export async function getMe(): Promise<StudentDto | null> {
-  const res = await fetch(`${API}/api/student/auth/me`, {
-    headers: await authHeaders(),
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`getMe failed: ${res.status}`);
-  return res.json();
-}
-
-/* ─── CV ─────────────────────────────────────────────────────────── */
 
 export interface CvUploadUrlResponse {
   uploadUrl: string;

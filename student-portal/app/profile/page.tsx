@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
 import Link from "next/link";
-import { getActiveCv, getActiveVideo, getMe, StudentDto, CvRecord, ExtractedCvData } from "@/lib/api";
+import { getActiveCv, getActiveVideo, bootstrapStudentProfile, StudentDto, CvRecord, ExtractedCvData } from "@/lib/api";
 import { toast } from "react-toastify";
 
 interface CvInfo {
@@ -58,7 +58,7 @@ export default function ProfilePage() {
         const [cvResult, videoResult, meResult] = await Promise.allSettled([
           getActiveCv(),
           getActiveVideo(),
-          getMe(),
+          bootstrapStudentProfile(),
         ]);
         if (cvResult.status    === "fulfilled" && cvResult.value)    setCvInfo(cvResult.value as CvInfo);
         if (videoResult.status === "fulfilled" && videoResult.value) setVideoInfo(videoResult.value as VideoInfo);
