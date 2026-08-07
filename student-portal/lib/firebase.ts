@@ -7,6 +7,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut as _signOut,
+  sendEmailVerification,
+  reload,
   User,
 } from "firebase/auth";
 
@@ -42,11 +44,25 @@ export async function signInWithEmail(email: string, password: string) {
 
 export async function signUpWithEmail(email: string, password: string) {
   const result = await createUserWithEmailAndPassword(auth, email, password);
+  await sendEmailVerification(result.user);
   return result;
 }
 
 export async function signOut() {
   return _signOut(auth);
+}
+
+/** Send (or resend) a verification email to the currently signed-in user */
+export async function resendVerificationEmail() {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  return sendEmailVerification(auth.currentUser);
+}
+
+/** Re-fetch the current user's record from Firebase so emailVerified reflects reality */
+export async function refreshUser(): Promise<User | null> {
+  if (!auth.currentUser) return null;
+  await reload(auth.currentUser);
+  return auth.currentUser;
 }
 
 /** Wait for Firebase Auth to finish initializing (needed after page refresh) */
