@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import AuthGuard from "@/components/AuthGuard";
 import Navbar from "@/components/Navbar";
+import AdBannerSlider from "@/components/AdBannerSlider";
 
 interface Job {
   id: number;
@@ -348,42 +349,8 @@ export default function DashboardPage() {
               </div>
 
               {/* Ad Banners */}
-              <div className="hidden lg:block space-y-4">
-                <div className="border-b border-[#ef9f26]/20 pb-2">
-                  <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
-                    <span>📢</span> Recommended Services
-                  </h2>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#ef9f26] to-[#d88a18] p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
-                    <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
-                      🎯
-                    </div>
-                    <div className="relative z-10">
-                      <span className="bg-white/20 text-white rounded px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">Bootcamp</span>
-                      <h4 className="mt-2 font-bold text-base leading-tight">Mock Interview prep with Tech Leads</h4>
-                      <p className="text-xs text-white/90 mt-1 max-w-[200px]">Get real feedback &amp; optimize code structure.</p>
-                    </div>
-                    <div className="mt-3 text-xs font-bold bg-white text-[#cf8114] rounded-lg py-2 px-3 self-start shadow hover:bg-[#fffaf3] transition">
-                      Enroll Today
-                    </div>
-                  </div>
-
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-forest-900 to-forest-800 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px] group cursor-pointer">
-                    <div className="absolute right-0 bottom-0 text-7xl opacity-15 translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-300">
-                      📝
-                    </div>
-                    <div className="relative z-10">
-                      <span className="bg-white/20 text-white rounded px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">Premium Review</span>
-                      <h4 className="mt-2 font-bold text-base leading-tight">CV Audit by Senior Recruiters</h4>
-                      <p className="text-xs text-[#ef9f26]/90 mt-1 max-w-[200px]">Unlock more callbacks with specialized screening audits.</p>
-                    </div>
-                    <div className="mt-3 text-xs font-bold bg-[#ef9f26] text-white rounded-lg py-2 px-3 self-start shadow hover:bg-[#d88a18] transition">
-                      Submit for Audit
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <AdBannerSlider />
               </div>
 
               {/* Career Guidance Blogs */}
