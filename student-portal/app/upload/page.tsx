@@ -561,28 +561,24 @@ export default function UploadPage() {
         {step === "wizard" && (
           <div className="flex-1 flex flex-col min-h-0 w-full">
             {parsing ? (
-              /* Upload Spinner with Progress */
+              /* CV Extraction Loading Screen */
               <div className="flex-1 flex flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-sm">
-                <div className="relative flex h-16 w-16 items-center justify-center">
-                  <div className="absolute h-full w-full rounded-full border-4 border-orange-100 border-t-orange-600 animate-spin" />
-                  <span className="text-xl">☁️</span>
+                <div className="relative flex h-20 w-20 items-center justify-center">
+                  <div className="absolute h-full w-full rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
+                  <div className="absolute h-12 w-12 rounded-full border-4 border-orange-50 border-t-orange-300 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }} />
+                  <span className="text-2xl">📄</span>
                 </div>
-                <h2 className="mt-5 text-base font-bold text-forest-900">Uploading to Azure</h2>
-                <p className="mt-1.5 text-xs text-ink-600 animate-pulse">{parsingStepText}</p>
-                {uploadProgress > 0 && (
-                  <div className="mt-4 w-64">
-                    <div className="flex justify-between text-[11px] text-ink-400 mb-1">
-                      <span>Upload progress</span>
-                      <span>{uploadProgress}%</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-orange-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-orange-600 transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+                <h2 className="mt-6 text-lg font-bold text-forest-900">Extracting CV</h2>
+                <p className="mt-2 text-xs text-ink-500 animate-pulse text-center max-w-xs">{parsingStepText}</p>
+                <div className="mt-6 flex gap-1.5">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-bounce"
+                      style={{ animationDelay: `${i * 0.18}s` }}
+                    />
+                  ))}
+                </div>
               </div>
             ) : (
               /* Full Width, Locked Viewport Split screen */

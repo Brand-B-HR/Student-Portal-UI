@@ -145,17 +145,7 @@ export default function LoginPage() {
 
           <div className="relative z-10">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                  <path
-                    d="M12 3C9 7 7 10 7 13.5C7 16.5 9.2 19 12 19C14.8 19 17 16.5 17 13.5C17 10 15 7 12 3Z"
-                    stroke="#9ddcb9"
-                    strokeWidth="1.4"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M12 19V21" stroke="#9ddcb9" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-              </span>
+              <img src="/logo.png" alt="StudentCV Portal" className="h-9 w-9 rounded-xl object-contain bg-white/10 p-0.5" />
               <span className="font-display text-[15px] font-semibold tracking-wide text-leaf-300">
                 StudentCV Portal
               </span>
