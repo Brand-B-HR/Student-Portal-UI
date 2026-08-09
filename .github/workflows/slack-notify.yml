@@ -1,0 +1,19 @@
+name: Slack notify on deploy
+
+on:
+  deployment_status
+
+jobs:
+  notify:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.ref == 'qa'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_URL: ${{ github.event.deployment_status.target_url }}
+          SHA: ${{ github.event.deployment.sha }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \":rocket: *QA deploy succeeded*\n<${DEPLOY_URL}|View deployment> — commit \`${SHA:0:7}\`\"}" \
+            "$SLACK_WEBHOOK_URL"
