@@ -4,8 +4,17 @@ on:
   deployment_status
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump event payload
+        run: |
+          echo "state: ${{ github.event.deployment_status.state }}"
+          echo "deployment ref: ${{ github.event.deployment.ref }}"
+          echo "environment: ${{ github.event.deployment.environment }}"
+
   notify:
-    if: github.event.deployment_status.state == 'success' && github.event.deployment.ref == 'qa'
+    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment.ref, 'qa')
     runs-on: ubuntu-latest
     steps:
       - name: Send Slack notification
