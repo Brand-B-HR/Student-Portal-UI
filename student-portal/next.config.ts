@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "brandbhrstoragedev.blob.core.windows.net",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "brandbhrdevstorage.blob.core.windows.net",
+        pathname: "/**",
+      },
     ],
   },
 };
