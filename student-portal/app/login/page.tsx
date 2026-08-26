@@ -15,14 +15,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
 
-  // Signup extra fields
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [university, setUniversity] = useState("");
-  const [degree, setDegree] = useState("");
-  const [graduationYear, setGraduationYear] = useState("");
-
   async function redirectAfterAuth() {
     try {
       await bootstrapStudentProfile();
@@ -73,22 +65,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        if (!firstName.trim() || !lastName.trim()) {
-          toast.error("First and last name are required.");
-          return;
-        }
         setIsSigningUp(true);
         await signUpWithEmail(email.trim(), password);
         try {
-          await bootstrapStudentProfile({
-            email: email.trim(),
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            phone: phone.trim() || undefined,
-            university: university.trim() || undefined,
-            degree: degree.trim() || undefined,
-            graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
-          });
+          // Name and study details are collected later, on the profile page.
+          await bootstrapStudentProfile({ email: email.trim() });
           toast.success("Account created! Welcome aboard.");
           router.replace("/upload");
         } catch (e: unknown) {
@@ -145,9 +126,9 @@ export default function LoginPage() {
 
           <div className="relative z-10">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="StudentCV Portal" className="h-9 w-9 rounded-xl object-contain bg-white/10 p-0.5" />
+              <img src="/logo.png" alt="CareerBuild" className="h-9 w-9 rounded-xl object-contain bg-white/10 p-0.5" />
               <span className="font-display text-[15px] font-semibold tracking-wide text-leaf-300">
-                StudentCV Portal
+                CareerBuild
               </span>
             </div>
 
@@ -215,99 +196,6 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6 space-y-4 text-left">
-              {/* Signup-only fields */}
-              {mode === "signup" && (
-                <>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label htmlFor="firstName" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                        First Name
-                      </label>
-                      <input
-                        id="firstName"
-                        type="text"
-                        placeholder="Jane"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label htmlFor="lastName" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                        Last Name
-                      </label>
-                      <input
-                        id="lastName"
-                        type="text"
-                        placeholder="Smith"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="phone" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                      Phone <span className="text-ink-400 font-normal">(optional)</span>
-                    </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      placeholder="+1 555 000 0000"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="university" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                      University <span className="text-ink-400 font-normal">(optional)</span>
-                    </label>
-                    <input
-                      id="university"
-                      type="text"
-                      placeholder="State University"
-                      value={university}
-                      onChange={(e) => setUniversity(e.target.value)}
-                      className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label htmlFor="degree" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                        Degree <span className="text-ink-400 font-normal">(opt.)</span>
-                      </label>
-                      <input
-                        id="degree"
-                        type="text"
-                        placeholder="BSc Computer Science"
-                        value={degree}
-                        onChange={(e) => setDegree(e.target.value)}
-                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                      />
-                    </div>
-                    <div className="w-24">
-                      <label htmlFor="gradYear" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
-                        Grad Year
-                      </label>
-                      <input
-                        id="gradYear"
-                        type="number"
-                        placeholder="2026"
-                        min="2020"
-                        max="2035"
-                        value={graduationYear}
-                        onChange={(e) => setGraduationYear(e.target.value)}
-                        className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 px-3.5 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
               {/* Email */}
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
@@ -399,7 +287,11 @@ export default function LoginPage() {
               className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-leaf-500 bg-white py-3 text-sm font-semibold text-forest-900 transition hover:bg-leaf-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
-              {loading ? "Signing in…" : "Continue with Google"}
+              {loading
+                ? "Please wait…"
+                : mode === "signup"
+                  ? "Sign up with Google"
+                  : "Continue with Google"}
             </button>
 
             <p className="mt-8 text-center text-xs leading-5 text-ink-400">

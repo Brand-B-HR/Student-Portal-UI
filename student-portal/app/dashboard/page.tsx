@@ -2,412 +2,188 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import AuthGuard from "@/components/AuthGuard";
-import Navbar from "@/components/Navbar";
-import AdBannerSlider from "@/components/AdBannerSlider";
-
-interface Job {
-  id: number;
-  title: string;
-  company: string;
-  logo: string;
-  location: string;
-  salary: string;
-  type: string;
-  tags: string[];
-}
-
-interface RealArticle {
-  id: string;
-  title: string;
-  contentHtml: string;
-  coverImageUrl?: string;
-  authorName?: string;
-  createdAt: string;
-  publishedAt?: string;
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function readTime(html: string): string {
-  const words = stripHtml(html).split(" ").filter(Boolean).length;
-  const mins = Math.max(1, Math.ceil(words / 200));
-  return `${mins} min read`;
-}
+import SiteShell from "@/components/SiteShell";
+import Container from "@/components/ui/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
+import ArticleCard from "@/components/ArticleCard";
+import ArticleRail from "@/components/ArticleRail";
+import AdBanner from "@/components/AdBanner";
+import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
+import { fetchArticles, type Article } from "@/lib/articles";
 
 export default function DashboardPage() {
-  const [realArticles, setRealArticles] = useState<RealArticle[]>([]);
-  const [loadingBlogs, setLoadingBlogs] = useState<boolean>(true);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Fetch real published blogs from API
   useEffect(() => {
-    async function loadBlogs() {
+    const ctrl = new AbortController();
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      setError(false);
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/blog/articles?page=1&pageSize=3`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setRealArticles(data.articles ?? []);
-        }
-      } catch {
-        // silent catch
+        const { articles } = await fetchArticles(1, 13, ctrl.signal);
+        if (!cancelled) setArticles(articles);
+      } catch (e) {
+        if (!cancelled && (e as Error).name !== "AbortError") setError(true);
       } finally {
-        setLoadingBlogs(false);
+        if (!cancelled) setLoading(false);
       }
-    }
-    loadBlogs();
+    })();
+
+    return () => {
+      cancelled = true;
+      ctrl.abort();
+    };
   }, []);
 
-  // Mock Job Postings
-  const [jobs] = useState<Job[]>([
-    {
-      id: 1,
-      title: "Software Engineering Intern",
-      company: "Google",
-      logo: "💻",
-      location: "Mountain View, CA (Hybrid)",
-      salary: "$45 - $55 / hr",
-      type: "Internship",
-      tags: ["React", "Python", "C++"]
-    },
-    {
-      id: 2,
-      title: "Junior Frontend Developer",
-      company: "TechCorp Solutions",
-      logo: "⚛️",
-      location: "Remote (US)",
-      salary: "$85,000 - $105,000",
-      type: "Full-Time",
-      tags: ["Next.js", "TypeScript", "Tailwind"]
-    },
-    {
-      id: 3,
-      title: "UX/UI Designer Intern",
-      company: "Figma",
-      logo: "🎨",
-      location: "San Francisco, CA (Hybrid)",
-      salary: "$40 - $48 / hr",
-      type: "Internship",
-      tags: ["Figma", "Design Systems", "Prototyping"]
-    },
-    {
-      id: 4,
-      title: "Backend Engineer",
-      company: "Stripe",
-      logo: "💳",
-      location: "Seattle, WA (Onsite)",
-      salary: "$130,000 - $155,000",
-      type: "Full-Time",
-      tags: ["Ruby on Rails", "Go", "SQL"]
-    },
-    {
-      id: 5,
-      title: "Full Stack Engineer",
-      company: "Vercel",
-      logo: "▲",
-      location: "Remote (Global)",
-      salary: "$110,000 - $135,000",
-      type: "Full-Time",
-      tags: ["Next.js", "Node.js", "Serverless"]
-    },
-    {
-      id: 6,
-      title: "Mobile App Developer Intern",
-      company: "SwiftKey",
-      logo: "📱",
-      location: "New York, NY (Hybrid)",
-      salary: "$35 - $42 / hr",
-      type: "Internship",
-      tags: ["React Native", "iOS", "Android"]
-    }
-  ]);
-
-  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
-  function handleApply(jobId: number) {
-    if (appliedJobs.includes(jobId)) return;
-    setAppliedJobs((prev) => [...prev, jobId]);
-  }
+  // Slot the feed into the page's sections.
+  const [featured, ...rest] = articles;
+  const latest = rest.slice(0, 6);
+  const rail = rest.slice(6, 12);
+  const mostRead = rest.slice(0, 4);
 
   return (
-    <AuthGuard>
-      <Navbar />
-      <main className="min-h-[calc(100vh-4rem)] bg-[#fffaf3] px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+    <SiteShell>
+      {/* ── Masthead ─────────────────────────────────────────── */}
+      <section className="border-b border-line bg-white">
+        <Container className="py-10 sm:py-14">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
+            Career Library
+          </p>
+          <h1 className="mt-3 max-w-3xl font-serif text-[34px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink-900 sm:text-[46px]">
+            Advice that gets you <em className="text-brand-600">hired</em>.
+          </h1>
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-ink-500 sm:text-base">
+            Guidance from recruiters and hiring managers &mdash; on writing a CV that lands,
+            interviewing with confidence, and building a career you actually want.
+          </p>
+        </Container>
+      </section>
 
-          {/* Three-Column Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-            {/* Left/Center Column (8 cols): Job Postings */}
-            <div className="lg:col-span-8 space-y-5">
-              
-              {/* Mobile Sticky Ads Slider */}
-              <div className="lg:hidden sticky top-[64px] z-30 bg-[#fffaf3]/95 backdrop-blur-md pt-2 pb-4 -mx-4 px-4 border-b border-[#ef9f26]/20 shadow-xs">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-ink-400 mb-2">Recommended Services</p>
-                <div 
-                  className="flex overflow-x-auto gap-3 snap-x pb-1"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {/* Mock Interview */}
-                  <div className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-[#ef9f26] to-[#d88a18] p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
-                    <div className="absolute right-0 bottom-0 text-5xl opacity-15 translate-x-2 translate-y-2">
-                      🎯
-                    </div>
-                    <div className="relative z-10">
-                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">Bootcamp</span>
-                      <h4 className="mt-1 font-bold text-xs leading-tight">Mock Interview prep with Tech Leads</h4>
-                    </div>
-                    <div className="mt-2 text-[10px] font-bold bg-white text-[#cf8114] rounded px-2.5 py-1 self-start shadow">
-                      Enroll Today
-                    </div>
-                  </div>
-
-                  {/* CV Audit */}
-                  <div className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-forest-900 to-forest-800 p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
-                    <div className="absolute right-0 bottom-0 text-5xl opacity-15 translate-x-2 translate-y-2">
-                      📝
-                    </div>
-                    <div className="relative z-10">
-                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">Premium Review</span>
-                      <h4 className="mt-1 font-bold text-xs leading-tight">CV Audit by Senior Recruiters</h4>
-                    </div>
-                    <div className="mt-2 text-[10px] font-bold bg-[#ef9f26] text-white rounded px-2.5 py-1 self-start shadow">
-                      Submit for Audit
-                    </div>
-                  </div>
-
-                  {/* Update CV Banner */}
-                  <Link href="/upload" className="flex-shrink-0 w-[260px] snap-center relative overflow-hidden rounded-xl bg-gradient-to-br from-[#ef9f26] to-forest-700 p-4 text-white shadow-sm flex flex-col justify-between min-h-[115px] group">
-                    <div className="absolute -right-3 -bottom-3 text-6xl opacity-10">
-                      📄
-                    </div>
-                    <div className="relative z-10">
-                      <span className="bg-white/20 text-white rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase">CV Management</span>
-                      <h4 className="mt-1 font-bold text-xs leading-tight">Update Your CV</h4>
-                    </div>
-                    <div className="mt-2 text-[10px] font-bold bg-white/20 text-white rounded px-2.5 py-1 self-start shadow">
-                      Replace CV
-                    </div>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between border-b border-[#ef9f26]/20 pb-2">
-                <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
-                  <span>💼</span> Open Job Postings
-                </h2>
-                <span className="text-xs bg-[#ef9f26]/15 text-[#cf8114] border border-[#ef9f26]/30 px-2.5 py-1 rounded-full font-bold">
-                  {jobs.length} Opportunities
-                </span>
-              </div>
-
-              {/* Mobile Compact Job List */}
-              <div className="flex flex-col gap-3 md:hidden">
-                {jobs.map((job) => (
-                  <div 
-                    key={job.id} 
-                    className="flex items-start gap-3 rounded-2xl border border-[#ef9f26]/20 bg-white p-4 shadow-sm hover:border-[#ef9f26]/40 transition"
-                  >
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#ef9f26]/10 text-2xl">
-                      {job.logo}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <h4 className="text-sm font-bold text-forest-900 truncate">{job.title}</h4>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-[#ef9f26]/20 text-[#2d1305] flex-shrink-0">
-                          {job.type}
-                        </span>
-                      </div>
-                      <p className="text-xs font-semibold text-[#ef9f26] mt-0.5">{job.company}</p>
-                      
-                      <div className="mt-2.5 flex items-center gap-2 text-[10px] text-ink-600 flex-wrap">
-                        <span>📍 {job.location}</span>
-                        <span>💵 {job.salary}</span>
-                      </div>
-                      
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {job.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="rounded bg-[#ef9f26]/10 px-1.5 py-0.5 text-[9px] font-semibold text-[#cf8114] border border-[#ef9f26]/20">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => handleApply(job.id)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition flex-shrink-0 self-center ${
-                        appliedJobs.includes(job.id)
-                          ? "bg-forest-900 text-white"
-                          : "bg-white text-[#ef9f26] border border-[#ef9f26] hover:bg-[#ef9f26] hover:text-white"
-                      }`}
-                    >
-                      {appliedJobs.includes(job.id) ? "✓" : "Apply"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop/Tablet Grid Card View */}
-              <div className="hidden md:grid md:grid-cols-2 gap-4">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="group rounded-2xl border border-[#ef9f26]/20 bg-white p-5 shadow-sm transition hover:border-[#ef9f26] hover:shadow-md flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ef9f26]/10 text-2xl group-hover:scale-105 transition-transform">
-                          {job.logo}
-                        </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          job.type === "Internship" ? "bg-[#ef9f26]/20 text-[#cf8114]" : "bg-forest-900 text-white"
-                        }`}>
-                          {job.type}
-                        </span>
-                      </div>
-
-                      <h3 className="mt-3.5 text-base font-bold text-forest-900 leading-tight">
-                        {job.title}
-                      </h3>
-                      <p className="text-sm font-semibold text-[#ef9f26] mt-1">
-                        {job.company}
-                      </p>
-
-                      <div className="mt-4 space-y-2 text-xs text-ink-600">
-                        <div className="flex items-center gap-1.5">
-                          <span>📍</span> {job.location}
-                        </div>
-                        <div className="flex items-center gap-1.5 font-medium">
-                          <span>💵</span> {job.salary}
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {job.tags.map((tag) => (
-                          <span key={tag} className="rounded bg-[#ef9f26]/10 px-2 py-0.5 text-[10px] font-semibold text-[#cf8114] border border-[#ef9f26]/20">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleApply(job.id)}
-                      className={`mt-5 w-full rounded-xl py-2.5 text-xs font-semibold transition border ${
-                        appliedJobs.includes(job.id)
-                          ? "bg-forest-900 text-white border-forest-900 cursor-default"
-                          : "bg-white text-[#cf8114] border-[#ef9f26] hover:bg-[#ef9f26] hover:text-white"
-                      }`}
-                    >
-                      {appliedJobs.includes(job.id) ? "✓ Applied" : "Quick Apply"}
-                    </button>
-                  </div>
-                ))}
-              </div>
+      <Container className="py-10 sm:py-14">
+        {error ? (
+          <ErrorState
+            message="We couldn't load articles right now. Please try again in a moment."
+            onRetry={() => window.location.reload()}
+          />
+        ) : loading ? (
+          <div className="space-y-10">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ArticleCardSkeleton />
+              <ArticleCardSkeleton />
             </div>
-
-            {/* Right Side Column (4 cols) */}
-            <div className="lg:col-span-4 space-y-6">
-
-              {/* Update CV Banner */}
-              <div className="hidden lg:block">
-                <Link href="/upload" className="block group">
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#ef9f26] to-forest-700 p-5 text-white shadow-md hover:shadow-xl transition-shadow duration-300 flex items-center gap-4 border border-[#ef9f26]/30">
-                    <div className="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-300 select-none">
-                      📄
-                    </div>
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 text-2xl">
-                      🔄
-                    </div>
-                    <div className="relative z-10">
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-white/80">CV Management</p>
-                      <h3 className="text-sm font-bold leading-tight mt-0.5">Update Your CV</h3>
-                      <p className="text-xs text-white/90 mt-1">Upload a new version to replace your current CV.</p>
-                    </div>
-                    <div className="ml-auto flex-shrink-0 relative z-10">
-                      <svg viewBox="0 0 24 24" className="h-5 w-5 stroke-white fill-none stroke-2 group-hover:translate-x-1 transition-transform duration-200">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                      </svg>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-
-              {/* Ad Banners */}
-              <div className="space-y-2">
-                <AdBannerSlider />
-              </div>
-
-              {/* Career Guidance Blogs */}
-              <div id="blogs" className="space-y-4 scroll-mt-20">
-                <div className="border-b border-[#ef9f26]/20 pb-2 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-forest-900 flex items-center gap-2">
-                    <span>📰</span> Career Articles
-                  </h2>
-                  <Link href="/blog" className="text-xs font-bold text-[#ef9f26] hover:underline">
-                    View All →
-                  </Link>
-                </div>
-
-                <div className="space-y-4">
-                  {loadingBlogs ? (
-                    <div className="p-4 text-center text-xs text-gray-400">Loading articles…</div>
-                  ) : realArticles.length > 0 ? (
-                    realArticles.map((article) => (
-                      <Link
-                        key={article.id}
-                        href={`/blog/${article.id}`}
-                        className="block rounded-2xl border border-[#ef9f26]/20 bg-white p-4 shadow-sm hover:border-[#ef9f26] hover:shadow-md transition duration-200"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="rounded bg-[#ef9f26]/20 border border-[#ef9f26]/30 px-2 py-0.5 text-[10px] font-bold text-[#cf8114] uppercase tracking-wide">
-                            {article.authorName ?? "BrandB HR"}
-                          </span>
-                          <span className="text-[10px] text-ink-400 font-medium">
-                            {readTime(article.contentHtml)}
-                          </span>
-                        </div>
-
-                        <h3 className="mt-2.5 text-sm font-bold text-forest-900 leading-snug hover:text-[#ef9f26] transition-colors">
-                          {article.title}
-                        </h3>
-
-                        <p className="mt-1.5 text-xs text-gray-500 leading-relaxed line-clamp-2">
-                          {stripHtml(article.contentHtml)}
-                        </p>
-
-                        <div className="mt-3 flex items-center justify-between text-[11px] text-gray-400 border-t border-[#ef9f26]/10 pt-2.5">
-                          <span>{formatDate(article.publishedAt ?? article.createdAt)}</span>
-                          <span className="text-[#ef9f26] font-bold hover:underline">Read Article →</span>
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-xs text-gray-500">No articles available.</div>
-                  )}
-                </div>
-              </div>
-
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <ArticleCardSkeleton key={i} />
+              ))}
             </div>
-
           </div>
-        </div>
-      </main>
-    </AuthGuard>
+        ) : articles.length === 0 ? (
+          <EmptyState
+            icon={
+              <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+            title="No articles yet"
+            description="Our career team is writing the first guides now. Check back shortly."
+          />
+        ) : (
+          <div className="space-y-14">
+
+            {/* Featured */}
+            <ArticleCard article={featured} variant="featured" priority />
+
+            {/* Small ad strip — contained, never full-bleed */}
+            <AdBanner variant="strip" />
+
+            {/* Latest + sidebar */}
+            <section className="grid gap-10 lg:grid-cols-[1fr_300px]">
+              <div className="min-w-0">
+                <SectionHeader
+                  title="Latest articles"
+                  subtitle="Fresh guidance, published as our team writes it."
+                  actionLabel="View all"
+                  actionHref="/blog"
+                />
+
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  {latest.map((a) => (
+                    <ArticleCard key={a.id} article={a} variant="standard" />
+                  ))}
+                </div>
+
+                <div className="mt-8 sm:hidden">
+                  <Link
+                    href="/blog"
+                    className="flex items-center justify-center rounded-full border border-line-strong bg-white px-5 py-3 text-sm font-semibold text-ink-800"
+                  >
+                    View all articles
+                  </Link>
+                </div>
+              </div>
+
+              {/* Sidebar rail */}
+              <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+                {mostRead.length > 0 && (
+                  <div className="rounded-[14px] border border-line bg-white p-5">
+                    <h2 className="font-serif text-[19px] font-semibold text-ink-900">
+                      Most read
+                    </h2>
+                    <div className="mt-2 divide-y divide-line">
+                      {mostRead.map((a, i) => (
+                        <ArticleCard key={a.id} article={a} variant="text" rank={i + 1} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <AdBanner variant="sidebar" />
+
+                {/* CV prompt */}
+                <div className="overflow-hidden rounded-[14px] border border-brand-200 bg-gradient-to-br from-brand-100 to-surface-subtle p-5">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-brand-500 text-white">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[2]">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <h3 className="mt-3.5 font-serif text-[19px] font-semibold leading-snug text-ink-900">
+                    Keep your CV current
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-600">
+                    Upload a new version any time to replace the CV on your profile.
+                  </p>
+                  <Link
+                    href="/upload"
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
+                  >
+                    Update your CV
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-current stroke-[2.5]">
+                      <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                </div>
+              </aside>
+            </section>
+
+            {/* Tinted rail band */}
+            {rail.length > 0 && (
+              <ArticleRail
+                title="More from the library"
+                subtitle="Deeper reads on interviews, salary, and growing your career."
+                articles={rail}
+                actionHref="/blog"
+                actionLabel="More"
+                tinted
+              />
+            )}
+          </div>
+        )}
+      </Container>
+    </SiteShell>
   );
 }

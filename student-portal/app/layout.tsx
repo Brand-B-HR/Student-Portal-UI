@@ -4,14 +4,18 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
-  title: "StudentCV Portal",
-  description: "Upload and manage your student CV",
+  title: {
+    default: "CareerBuild",
+    template: "%s · CareerBuild",
+  },
+  description:
+    "Career guidance, hiring insight, and CV tools — written by the people who actually do the hiring.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-mint-50 text-ink-900 antialiased" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth">
+      <body className="bg-surface-subtle text-ink-900 antialiased" suppressHydrationWarning>
         {children}
         <ToastContainer
           position="top-right"

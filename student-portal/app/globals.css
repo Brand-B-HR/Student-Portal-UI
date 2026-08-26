@@ -1,65 +1,127 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+/* ─────────────────────────────────────────────────────────────
+   CareerBuild — Design System
+   Fonts: Newsreader (editorial serif, TRUE italics) + Plus Jakarta Sans (UI)
+   Both load real italic axes so <em> renders a genuine italic,
+   never a browser-synthesised fake slant.
+   ───────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* forest — dark surfaces */
-  --color-forest-950: #2d1305;
-  --color-forest-900: #3b1a07;
-  --color-forest-800: #4d230b;
-  --color-forest-700: #5f2d10;
+  /* ── Brand orange — the system default (#ef9f26) ── */
+  --color-brand-50:  #fffaf3;
+  --color-brand-100: #fdf2e1;
+  --color-brand-200: #fbe4bd;
+  --color-brand-300: #f6c57d;
+  --color-brand-400: #f2b251;
+  --color-brand-500: #ef9f26;  /* PRIMARY */
+  --color-brand-600: #cf8114;
+  --color-brand-700: #a5650f;
+  --color-brand-800: #7a4a0b;
+  --color-brand-900: #4d2f07;
 
-  /* leaf — primary accent */
+  /* ── Warm ink — text ── */
+  --color-ink-900: #1c1410;
+  --color-ink-800: #2c1810;
+  --color-ink-700: #43332a;
+  --color-ink-600: #5c473e;
+  --color-ink-500: #7a655a;
+  --color-ink-400: #9c8375;
+  --color-ink-300: #c4b3a8;
+  --color-ink-200: #e4d9cf;
+
+  /* ── Surfaces ── */
+  --color-surface:        #ffffff;
+  --color-surface-subtle: #fffaf3;
+  --color-surface-muted:  #fdf7ee;
+  --color-surface-inverse:#1c1410;
+
+  /* ── Hairlines ── */
+  --color-line:        #efe4d6;
+  --color-line-strong: #e2d2bf;
+
+  /* ── Legacy aliases (existing pages keep working) ── */
+  --color-forest-950: #1c1410;
+  --color-forest-900: #2c1810;
+  --color-forest-800: #43332a;
+  --color-forest-700: #5c473e;
   --color-leaf-600: #cf8114;
   --color-leaf-500: #ef9f26;
   --color-leaf-400: #f2b251;
   --color-leaf-300: #f6c57d;
   --color-leaf-100: #fdf2e1;
-
-  /* mint — light backgrounds */
-  --color-mint-100: #fde7c8;
-  --color-mint-50: #fffaf3;
-  --color-paper: #ffffff;
-
-  /* ink — text */
-  --color-ink-900: #2c1810;
-  --color-ink-600: #5c473e;
-  --color-ink-400: #9c8375;
-
-  /* override tailwind orange colors to keep consistency */
-  --color-orange-50: #fffaf3;
+  --color-mint-100: #fbe4bd;
+  --color-mint-50:  #fffaf3;
+  --color-paper:    #ffffff;
+  --color-orange-50:  #fffaf3;
   --color-orange-100: #fdf2e1;
-  --color-orange-200: #fde7c8;
+  --color-orange-200: #fbe4bd;
   --color-orange-300: #f6c57d;
   --color-orange-400: #f2b251;
   --color-orange-500: #ef9f26;
   --color-orange-600: #cf8114;
+  --color-orange-700: #a5650f;
+  --color-orange-800: #7a4a0b;
+  --color-orange-900: #4d2f07;
 
-  /* type */
-  --font-display: "Fraunces", ui-serif, serif;
-  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  /* ── Type ── */
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+  --font-sans:  "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Newsreader", ui-serif, Georgia, serif;
+
+  /* ── Elevation ── */
+  --shadow-card:  0 1px 2px rgba(28, 20, 16, 0.04), 0 1px 3px rgba(28, 20, 16, 0.03);
+  --shadow-lift:  0 10px 30px -12px rgba(28, 20, 16, 0.18);
+  --shadow-pop:   0 20px 50px -20px rgba(28, 20, 16, 0.28);
+
+  /* ── Radii ── */
+  --radius-card: 14px;
+  --radius-pill: 999px;
 }
 
 @layer base {
   html {
     min-height: 100%;
     font-family: var(--font-sans);
-    background:
-      radial-gradient(circle at top left, rgba(239, 159, 38, 0.15), transparent 30%),
-      radial-gradient(circle at top right, rgba(207, 129, 20, 0.1), transparent 24%),
-      linear-gradient(180deg, #fffbf7 0%, #fffaf3 100%);
+    background-color: #fffaf3;
+    scroll-behavior: smooth;
   }
 
   body {
     min-height: 100vh;
     background-color: #fffaf3;
-    color: #2c1810;
+    color: #1c1410;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Never let the browser fake an italic or a bold — we load real ones. */
+    font-synthesis-weight: none;
+    font-synthesis-style: none;
   }
 
+  /* True italics everywhere. */
+  i, em, cite, .italic {
+    font-style: italic;
+    font-synthesis-style: none;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p { text-wrap: pretty; }
+
   ::selection {
-    background: rgba(239, 159, 38, 0.18);
-    color: var(--color-ink-900);
+    background: rgba(239, 159, 38, 0.22);
+    color: #1c1410;
+  }
+
+  /* Focus ring — consistent across every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #ef9f26;
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 }
 
@@ -77,220 +139,164 @@
     height: 2.5rem;
     width: 2.5rem;
     border-radius: 9999px;
-    border: 4px solid #fdf2e1;
-    border-top-color: #cf8114;
+    border: 3px solid #fdf2e1;
+    border-top-color: #ef9f26;
     animation: spin 0.9s linear infinite;
   }
-}
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  /* Horizontal rails — hide the scrollbar, keep the scroll. */
+  .rail-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
+  .rail-scroll::-webkit-scrollbar { display: none; }
 }
 
-/* Blog Article HTML Prose Styles */
-.prose-blog {
-  font-size: 1rem;
-  line-height: 1.8;
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-fade-in { animation: fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ─────────────────────────────────────────────────────────────
+   Article body — rich HTML from the admin portal's Quill editor
+   ───────────────────────────────────────────────────────────── */
+.blog-content {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.75;
   color: #2c1810;
+  font-optical-sizing: auto;
 
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    color: #1a2e1a;
-    margin-top: 1.8em;
-    margin-bottom: 0.8em;
-    line-height: 1.3;
+  /* Backstop: authored content must never widen the page. Long URLs, unbroken
+     strings, and nbsp-joined runs that slip past normalizeArticleHtml() break
+     inside this column instead of overflowing it. */
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+
+  /* Nothing a content editor can insert escapes the reading column. */
+  * { max-width: 100%; }
+
+  p { margin: 0 0 1.35em; }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    color: #1c1410;
+    letter-spacing: -0.015em;
+  }
+  h1 { font-size: 2.125rem; font-weight: 600; line-height: 1.18; margin: 1.4em 0 0.5em; }
+  h2 { font-size: 1.625rem; font-weight: 600; line-height: 1.25; margin: 1.5em 0 0.5em; }
+  h3 { font-size: 1.3125rem; font-weight: 600; line-height: 1.35; margin: 1.4em 0 0.4em; }
+
+  strong, b { font-weight: 650; color: #1c1410; }
+
+  /* Real italics — no synthesis. */
+  em, i {
+    font-style: italic;
+    font-synthesis-style: none;
+  }
+  em strong, strong em, b i, i b {
+    font-style: italic;
+    font-weight: 650;
   }
 
-  h1 { font-size: 1.875rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
-
-  p {
-    margin-top: 1em;
-    margin-bottom: 1em;
-  }
+  u { text-decoration: underline; text-underline-offset: 3px; }
+  s { text-decoration: line-through; color: #9c8375; }
 
   a {
-    color: #cf8114;
+    color: #a5650f;
     text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
     font-weight: 500;
-
-    &:hover {
-      color: #b06a0c;
-    }
+    transition: color 0.15s;
+    &:hover { color: #ef9f26; }
   }
 
-  ul, ol {
-    margin-top: 1em;
-    margin-bottom: 1em;
-    padding-left: 1.5em;
-  }
-
-  ul { list-style-type: disc; }
-  ol { list-style-type: decimal; }
-
-  li {
-    margin-top: 0.4em;
-    margin-bottom: 0.4em;
-  }
-
-  blockquote {
-    border-left: 4px solid #f2b251;
-    padding-left: 1rem;
-    font-style: italic;
-    color: #5c473e;
-    margin: 1.5em 0;
-    background: rgba(254, 231, 200, 0.2);
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-radius: 0 8px 8px 0;
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
-    margin: 1.5em 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  figure {
-    margin: 1.5em 0;
-    text-align: center;
-
-    img {
-      margin: 0 auto;
-    }
-
-    figcaption {
-      font-size: 0.875rem;
-      color: #9c8375;
-      margin-top: 0.5rem;
-    }
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5em 0;
-
-    th, td {
-      border: 1px solid #fde7c8;
-      padding: 0.625rem 0.875rem;
-      text-align: left;
-    }
-
-    th {
-      background-color: #fdf2e1;
-      font-weight: 600;
-      color: #3b1a07;
-    }
-  }
-
-  pre, code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  }
-
-  code {
-    background: #fdf2e1;
-    color: #3b1a07;
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-size: 0.875em;
-  }
-
-  pre {
-    background: #1e1e1e;
-    color: #fdf2e1;
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-
-    code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-    }
-  }
-}
-
-/* ── Blog article rich content (Quill HTML output) ─────────────── */
-.blog-content {
-  font-size: 1.0625rem;
-  line-height: 1.85;
-  color: #2c1810;
-
-  p  { margin: 0 0 1.2em; }
-
-  h1 { font-size: 2rem;   font-weight: 800; line-height: 1.2; color: #1a2e1a; margin: 1.2em 0 0.5em; }
-  h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; color: #1a2e1a; margin: 1.2em 0 0.5em; border-bottom: 2px solid #fdf2e1; padding-bottom: 0.3em; }
-  h3 { font-size: 1.2rem; font-weight: 700; line-height: 1.4; color: #2c1810; margin: 1em 0 0.4em; }
-
-  strong, b { font-weight: 700; color: #1a2e1a; }
-  em, i     { font-style: italic; }
-  u         { text-decoration: underline; }
-  s         { text-decoration: line-through; color: #9c8375; }
-
-  /* Quill alignment classes */
-  .ql-align-center  { text-align: center; }
-  .ql-align-right   { text-align: right; }
-  .ql-align-justify { text-align: justify; }
-
-  /* Quill font size classes */
-  .ql-size-small { font-size: 0.85em; }
-  .ql-size-large { font-size: 1.25em; }
-  .ql-size-huge  { font-size: 1.7em; }
-
-  ol, ul { margin: 0 0 1.2em; padding-left: 1.8em; }
+  ol, ul { margin: 0 0 1.35em; padding-left: 1.5em; }
   ol { list-style: decimal; }
   ul { list-style: disc; }
-  li { margin-bottom: 0.4em; }
+  li { margin-bottom: 0.5em; }
+  li::marker { color: #cf8114; }
 
   blockquote {
-    border-left: 4px solid #ef9f26;
-    background: #fffaf3;
-    padding: 12px 20px;
-    margin: 1.5em 0;
-    border-radius: 0 8px 8px 0;
-    color: #5c473e;
+    font-family: var(--font-serif);
     font-style: italic;
+    font-size: 1.3125rem;
+    line-height: 1.6;
+    border-left: 3px solid #ef9f26;
+    padding: 0.25em 0 0.25em 1.4em;
+    margin: 1.8em 0;
+    color: #43332a;
   }
 
-  pre.ql-syntax {
-    background: #1e1e1e;
-    color: #fdf2e1;
-    border-radius: 10px;
-    padding: 16px 20px;
-    font-family: ui-monospace, monospace;
-    font-size: 0.875em;
-    overflow-x: auto;
-    margin: 1.2em 0;
-  }
+  hr { border: 0; border-top: 1px solid #efe4d6; margin: 2.5em 0; }
 
-  a {
-    color: #cf8114;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    &:hover { color: #3b1a07; }
-  }
-
-  /* Inline images inserted by Quill.
-     We keep max-width and border-radius as safe defaults but do NOT
-     override width/height/margin so that inline styles from the
-     image editor (resize + alignment) are preserved. */
   img {
     display: block;
     max-width: 100%;
-    border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    /* margin intentionally omitted — inline style controls alignment */
+    height: auto;
+    border-radius: 12px;
+    /* margin omitted — inline styles from the editor control alignment */
   }
 
-  /* Quill indent classes */
-  .ql-indent-1 { padding-left:  3em; }
-  .ql-indent-2 { padding-left:  6em; }
-  .ql-indent-3 { padding-left:  9em; }
+  figure { margin: 2em 0; text-align: center; }
+  figcaption {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    color: #9c8375;
+    margin-top: 0.75rem;
+  }
+
+  /* Wide tables scroll inside their own box rather than widening the page. */
+  table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 2em 0;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+
+    th, td { border: 1px solid #efe4d6; padding: 0.7rem 0.9rem; text-align: left; }
+    th { background: #fffaf3; font-weight: 600; color: #1c1410; }
+  }
+
+  pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  code {
+    background: #fdf2e1;
+    color: #7a4a0b;
+    padding: 0.15em 0.4em;
+    border-radius: 5px;
+    font-size: 0.85em;
+  }
+  pre, pre.ql-syntax {
+    background: #1c1410;
+    color: #fdf2e1;
+    padding: 1.1rem 1.3rem;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 1.8em 0;
+    font-size: 0.875rem;
+    line-height: 1.7;
+
+    code { background: transparent; color: inherit; padding: 0; }
+  }
+
+  /* Quill alignment / size / indent classes */
+  .ql-align-center  { text-align: center; }
+  .ql-align-right   { text-align: right; }
+  .ql-align-justify { text-align: justify; }
+  .ql-size-small { font-size: 0.85em; }
+  .ql-size-large { font-size: 1.25em; }
+  .ql-size-huge  { font-size: 1.7em; }
+  .ql-indent-1 { padding-left: 3em; }
+  .ql-indent-2 { padding-left: 6em; }
+  .ql-indent-3 { padding-left: 9em; }
   .ql-indent-4 { padding-left: 12em; }
 }
+
