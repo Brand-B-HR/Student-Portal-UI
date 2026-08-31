@@ -1,6 +1,5 @@
 import { getIdToken } from "@/lib/firebase";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5210";
+import { API_BASE_URL as API } from "@/lib/config";
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await getIdToken();
@@ -143,6 +142,9 @@ export async function getCvUploadUrl(
 export interface CvConfirmResponse {
   id: number;
   fileName: string;
+  // Extraction runs async on the backend, so this is normally "processing"
+  // right after confirm — extractedDataJson is only populated once a later
+  // poll (see pollCvExtraction) reports "extracted".
   extractionStatus: string;
   extractedDataJson?: string;
 }
@@ -186,6 +188,29 @@ export async function getActiveCv(): Promise<{ cv: CvRecord; downloadUrl: string
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getActiveCv failed: ${res.status}`);
   return res.json();
+}
+
+/**
+ * CV extraction now runs in a background queue, so `confirmCvUpload` returns
+ * before extraction finishes. Poll `/cv/active` until the status leaves
+ * "processing". Returns the resolved CvRecord, or null if it's still
+ * "processing" when `timeoutMs` is reached.
+ */
+export async function pollCvExtraction(
+  options: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<CvRecord | null> {
+  const intervalMs = options.intervalMs ?? 2500;
+  const timeoutMs = options.timeoutMs ?? 60000;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const result = await getActiveCv();
+    if (result && result.cv.extractionStatus !== "processing") {
+      return result.cv;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return null;
 }
 
 /* ─── Video ──────────────────────────────────────────────────────── */

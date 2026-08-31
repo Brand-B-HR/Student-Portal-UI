@@ -110,7 +110,7 @@ The API must be running separately — see `Admin-Portal-API/StudentPortal` (def
 
 ## Environment variables
 
-Create `.env.local` in this directory:
+Create `.env.local` in this directory (see `.env.example` for the full template):
 
 ```ini
 NEXT_PUBLIC_API_URL=http://localhost:5033
@@ -118,10 +118,17 @@ NEXT_PUBLIC_API_URL=http://localhost:5033
 NEXT_PUBLIC_FIREBASE_API_KEY=…
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=…
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=…
+
+# Unused today (no Storage or Analytics calls yet), but set them so adding
+# either later doesn't silently fail on missing config.
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=…
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=…
+NEXT_PUBLIC_FIREBASE_APP_ID=…
 ```
 
-All four are required. `NEXT_PUBLIC_*` values are exposed to the browser by design —
-never put a secret here.
+The API URL and first three Firebase values are required for the app to function;
+the last three Firebase values are forward-compatibility only. `NEXT_PUBLIC_*` values
+are exposed to the browser by design — never put a secret here.
 
 ---
 
@@ -149,7 +156,6 @@ components/
   ArticleRail.tsx       horizontal scrolling row
   AdBanner.tsx          advert slots
   CommentSection.tsx    comments (front end only)
-  Navbar.tsx            alias of SiteHeader (back-compat)
   ui/                   Container, Button, Badge, SectionHeader, States
 
 lib/

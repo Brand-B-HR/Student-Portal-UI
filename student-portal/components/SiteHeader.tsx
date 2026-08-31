@@ -7,10 +7,13 @@ import { auth, signOut, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
 import { initialsOf } from "@/lib/articles";
 
+// "/jobs" (app/jobs/page.tsx) is a coming-soon stub with no real data yet —
+// left out of primary nav until there's something to show. The page itself
+// still exists for direct/future linking.
 const NAV = [
   { href: "/dashboard", label: "Home" },
   { href: "/blog", label: "Articles" },
-  { href: "/profile", label: "My CV & Profile" },
+  { href: "/profile", label: "Profile" },
 ];
 
 function Wordmark({ compact = false }: { compact?: boolean }) {

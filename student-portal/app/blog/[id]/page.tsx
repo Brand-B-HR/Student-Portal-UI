@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import SiteShell from "@/components/SiteShell";
@@ -16,57 +15,30 @@ import {
   readTime,
   authorOf,
   initialsOf,
-  normalizeArticleHtml,
-  type Article,
+  sanitizeArticleHtml,
 } from "@/lib/articles";
+import { useAsync } from "@/hooks/useAsync";
 
 export default function BlogArticlePage() {
   const params = useParams<{ id: string }>();
-  const [article, setArticle] = useState<Article | null>(null);
-  const [related, setRelated] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<"" | "not_found" | "error">("");
+  const {
+    data: article,
+    loading,
+    error: fetchError,
+  } = useAsync((signal) => fetchArticle(params.id, signal), [params.id]);
+  const error = !fetchError ? "" : fetchError.message === "not_found" ? "not_found" : "error";
 
-  useEffect(() => {
-    if (!params.id) return;
-    const ctrl = new AbortController();
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await fetchArticle(params.id, ctrl.signal);
-        if (!cancelled) setArticle(data);
-      } catch (e) {
-        const msg = (e as Error).message;
-        if (msg === "AbortError" || (e as Error).name === "AbortError") return;
-        if (!cancelled) setError(msg === "not_found" ? "not_found" : "error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      ctrl.abort();
-    };
-  }, [params.id]);
-
-  // Related reads — everything else from the latest feed.
-  useEffect(() => {
-    if (!article) return;
-    const ctrl = new AbortController();
-    (async () => {
-      try {
-        const { articles } = await fetchArticles(1, 7, ctrl.signal);
-        setRelated(articles.filter((a) => a.id !== article.id).slice(0, 3));
-      } catch {
-        /* related reads are optional */
-      }
-    })();
-    return () => ctrl.abort();
-  }, [article]);
+  // Related reads — everything else from the latest feed. Optional, so a
+  // failure here is swallowed rather than surfaced as a page error.
+  const { data: relatedData } = useAsync(
+    async (signal) => {
+      if (!article) return [];
+      const { articles } = await fetchArticles(1, 7, signal);
+      return articles.filter((a) => a.id !== article.id).slice(0, 3);
+    },
+    [article]
+  );
+  const related = relatedData ?? [];
 
   const author = article ? authorOf(article) : "";
   const published = article ? formatDate(article.publishedAt ?? article.createdAt, true) : "";
@@ -154,7 +126,7 @@ export default function BlogArticlePage() {
             {/* Body — styled by .blog-content in globals.css */}
             <div
               className="blog-content mt-10"
-              dangerouslySetInnerHTML={{ __html: normalizeArticleHtml(article.contentHtml) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.contentHtml) }}
             />
 
             {/* Foot */}

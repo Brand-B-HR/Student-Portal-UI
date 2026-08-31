@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail } from "@/lib/firebase";
 import { bootstrapStudentProfile, getActiveCv, ApiError } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -55,7 +56,7 @@ export default function LoginPage() {
       // onAuthStateChanged listener handles redirection
       toast.success("Signed in with Google!");
     } catch (e: unknown) {
-      toast.error((e as Error).message ?? "Sign-in failed. Please try again.");
+      toast.error(errorMessage(e, "Sign-in failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -93,8 +94,7 @@ export default function LoginPage() {
       }
     } catch (e: unknown) {
       setIsSigningUp(false);
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
-      toast.error(message ?? "Authentication failed. Please try again.");
+      toast.error(errorMessage(e, "Authentication failed. Please try again."));
     } finally {
       setLoading(false);
     }

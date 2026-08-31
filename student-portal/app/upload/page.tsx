@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   getCvUploadUrl,
   confirmCvUpload,
+  pollCvExtraction,
   getVideoUploadUrl,
   confirmVideoUpload,
   uploadToAzureBlob,
@@ -13,20 +14,17 @@ import {
   ExtractedCvData,
 } from "@/lib/api";
 import { toast } from "react-toastify";
+import { useEditableList } from "@/hooks/useEditableList";
+import {
+  mapExtractedCvData,
+  type CvJobFields as Job,
+  type CvEducationFields as Education,
+} from "@/lib/cvMapping";
+import { errorMessage as toErrorMessage } from "@/lib/errors";
 
-interface Job {
-  title: string;
-  company: string;
-  startDate: string;
-  endDate: string;
-  description: string;
-}
-
-interface Education {
-  degree: string;
-  institution: string;
-  graduationYear: string;
-}
+// Shared with the video-file check below, and with the "up to 20MB" copy
+// in the dropzone hints — keep those hints in sync if this changes.
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 interface ProfileData {
   student: {
@@ -93,6 +91,10 @@ export default function UploadPage() {
   // Raw extracted data returned from confirm endpoint (used to seed the wizard)
   const [extractedData, setExtractedData] = useState<ExtractedCvData | null>(null);
 
+  // Set when extraction didn't finish with usable data by the time the wizard
+  // opens, so we can tell the user the fields below are blank / may still fill in later.
+  const [extractionNotice, setExtractionNotice] = useState<"failed" | "timeout" | null>(null);
+
   // Note: No automatic redirect here — users can intentionally come from
   // the dashboard to re-upload/update their CV.
 
@@ -114,7 +116,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (selectedFile.size > 20 * 1024 * 1024) {
+    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
       setErrorMessage("File must be 20 MB or smaller.");
       return;
     }
@@ -139,7 +141,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (selectedFile.size > 20 * 1024 * 1024) {
+    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
       setErrorMessage("File must be 20 MB or smaller.");
       return;
     }
@@ -163,6 +165,7 @@ export default function UploadPage() {
     setUploadProgress(0);
     setStep("wizard");
     setWizardStep(1);
+    setExtractionNotice(null);
 
     const stages = [
       "Requesting secure upload URL...",
@@ -185,46 +188,66 @@ export default function UploadPage() {
         await uploadToAzureBlob(uploadUrl, file, (pct) => setUploadProgress(pct));
 
         setParsingStepText(stages[2]);
-        // confirm now returns extracted JSON — use it to pre-fill the wizard
+        // confirm enqueues extraction on a background worker and returns
+        // immediately — extractionStatus is normally "processing" here.
         const confirmed = await confirmCvUpload(file.name, storageKey, file.size, file.type);
 
-       if (confirmed.extractedDataJson) {
-  try {
-    const parsed: ExtractedCvData = JSON.parse(confirmed.extractedDataJson);
-    setExtractedData(parsed);
+        let extractionStatus = confirmed.extractionStatus;
+        let extractedDataJson = confirmed.extractedDataJson;
 
-    setProfileData((prev) => ({
-      ...prev,
-      student: {
-        ...prev.student,
-        fullName:  parsed.name             ?? prev.student.fullName,
-        email:     parsed.email            ?? prev.student.email,
-        phone:     parsed.phone            ?? prev.student.phone,
-        location:  parsed.location         ?? prev.student.location,
-        linkedin:  parsed.links?.linkedIn  ?? prev.student.linkedin,
-        portfolio: parsed.links?.portfolio ?? parsed.links?.github ?? prev.student.portfolio,
-      },
-      currentCv: {
-        ...prev.currentCv,
-        fileName: file.name,
-        skills:   parsed.skills ?? [],
-        education: (parsed.education ?? []).map((e) => ({
-          degree: e.degree ?? "",
-          institution: e.institution ?? "",
-          graduationYear: e.graduationYear ?? "",
-        })),
-        experience: (parsed.experience ?? []).map((e) => ({
-          title: e.title ?? "",
-          company: e.company ?? "",
-          startDate: e.startDate ?? "",
-          endDate: e.endDate ?? "",
-          description: e.description ?? "",
-        })),
-      }
-    }));
-  } catch { /* ignore JSON parse error — wizard stays empty */ }
-}
-        toast.success("CV uploaded and extracted!");
+        if (extractionStatus === "processing") {
+          setParsingStepText("Extracting CV data with AI... this can take up to a minute");
+          const polled = await pollCvExtraction({ intervalMs: 2500, timeoutMs: 60000 });
+          if (polled) {
+            extractionStatus = polled.extractionStatus;
+            extractedDataJson = polled.extractedDataJson;
+          } else {
+            extractionStatus = "timeout";
+          }
+        }
+
+        // Always record the file name, regardless of extraction outcome.
+        setProfileData((prev) => ({
+          ...prev,
+          currentCv: { ...prev.currentCv, fileName: file.name },
+        }));
+
+        if (extractionStatus === "extracted" && extractedDataJson) {
+          try {
+            const parsed: ExtractedCvData = JSON.parse(extractedDataJson);
+            setExtractedData(parsed);
+            const mapped = mapExtractedCvData(parsed);
+
+            setProfileData((prev) => ({
+              ...prev,
+              student: {
+                ...prev.student,
+                fullName:  mapped.student.fullName  || prev.student.fullName,
+                email:     mapped.student.email     || prev.student.email,
+                phone:     mapped.student.phone     || prev.student.phone,
+                location:  mapped.student.location  || prev.student.location,
+                linkedin:  mapped.student.linkedin  || prev.student.linkedin,
+                portfolio: mapped.student.portfolio || mapped.student.github || prev.student.portfolio,
+              },
+              currentCv: {
+                ...prev.currentCv,
+                skills: mapped.skills,
+                education: mapped.education,
+                experience: mapped.experience,
+              }
+            }));
+            toast.success("CV uploaded and extracted!");
+          } catch {
+            setExtractionNotice("failed");
+            toast.error("We received your CV but couldn't read the extracted data. Please fill in the details manually.");
+          }
+        } else if (extractionStatus === "failed") {
+          setExtractionNotice("failed");
+          toast.error("We couldn't automatically extract details from your CV. Please fill them in manually below.");
+        } else if (extractionStatus === "timeout") {
+          setExtractionNotice("timeout");
+          toast.info("Your CV is still being processed. Feel free to fill in details manually now — check your profile page shortly for the auto-filled version.");
+        }
       } else if (fileType === "video") {
         setParsingStepText(stages[0]);
         const { uploadUrl, storageKey } = await getVideoUploadUrl(
@@ -246,7 +269,7 @@ export default function UploadPage() {
 
       setParsingStepText(stages[3]);
     } catch (err: unknown) {
-      toast.error((err as Error).message ?? "Upload failed. Please try again.");
+      toast.error(toErrorMessage(err, "Upload failed. Please try again."));
       setStep("upload");
     } finally {
       setParsing(false);
@@ -265,76 +288,27 @@ export default function UploadPage() {
     }));
   }
 
-  // Experience changes
-  function updateExperience(idx: number, key: keyof Job, value: string) {
-    setProfileData((prev) => {
-      const exp = [...prev.currentCv.experience];
-      exp[idx] = { ...exp[idx], [key]: value };
-      return {
-        ...prev,
-        currentCv: { ...prev.currentCv, experience: exp }
-      };
-    });
-  }
+  // Experience / education — generic add/update/remove, backed by profileData.
+  const experience = useEditableList<Job>(profileData.currentCv.experience, (updater) =>
+    setProfileData((prev) => ({
+      ...prev,
+      currentCv: { ...prev.currentCv, experience: updater(prev.currentCv.experience) }
+    }))
+  );
 
-  // Add/Remove experience
+  const education = useEditableList<Education>(profileData.currentCv.education, (updater) =>
+    setProfileData((prev) => ({
+      ...prev,
+      currentCv: { ...prev.currentCv, education: updater(prev.currentCv.education) }
+    }))
+  );
+
   function addExperience() {
-    setProfileData((prev) => ({
-      ...prev,
-      currentCv: {
-        ...prev.currentCv,
-        experience: [
-          ...prev.currentCv.experience,
-          { title: "", company: "", startDate: "", endDate: "", description: "" }
-        ]
-      }
-    }));
+    experience.add({ title: "", company: "", startDate: "", endDate: "", description: "" });
   }
 
-  function removeExperience(idx: number) {
-    setProfileData((prev) => {
-      const exp = prev.currentCv.experience.filter((_, i) => i !== idx);
-      return {
-        ...prev,
-        currentCv: { ...prev.currentCv, experience: exp }
-      };
-    });
-  }
-
-  // Education changes
-  function updateEducation(idx: number, key: keyof Education, value: string) {
-    setProfileData((prev) => {
-      const edu = [...prev.currentCv.education];
-      edu[idx] = { ...edu[idx], [key]: value };
-      return {
-        ...prev,
-        currentCv: { ...prev.currentCv, education: edu }
-      };
-    });
-  }
-
-  // Add/Remove education
   function addEducation() {
-    setProfileData((prev) => ({
-      ...prev,
-      currentCv: {
-        ...prev.currentCv,
-        education: [
-          ...prev.currentCv.education,
-          { degree: "", institution: "", graduationYear: "" }
-        ]
-      }
-    }));
-  }
-
-  function removeEducation(idx: number) {
-    setProfileData((prev) => {
-      const edu = prev.currentCv.education.filter((_, i) => i !== idx);
-      return {
-        ...prev,
-        currentCv: { ...prev.currentCv, education: edu }
-      };
-    });
+    education.add({ degree: "", institution: "", graduationYear: "" });
   }
 
   // Skills changes
@@ -394,7 +368,7 @@ export default function UploadPage() {
     toast.success("Profile saved! Redirecting to dashboard...");
     router.push("/dashboard");
   } catch (err: unknown) {
-    toast.error((err as Error).message ?? "Failed to save profile.");
+    toast.error(toErrorMessage(err, "Failed to save profile."));
   }
 }
 
@@ -724,9 +698,17 @@ export default function UploadPage() {
                       </div>
                     </div>
 
+                    {extractionNotice && (
+                      <div className="mb-4 flex-shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+                        {extractionNotice === "failed"
+                          ? "We couldn't automatically extract details from your CV. Please fill in the fields below manually."
+                          : "Still extracting your CV in the background. Fields below are blank for now — fill them in manually, or check your profile page in a bit for the auto-filled version."}
+                      </div>
+                    )}
+
                     {/* Scrollable Form Body */}
                     <div className="flex-1 overflow-y-auto pr-1 min-h-0">
-                      
+
                       {/* Step 1: Basic Info */}
                       {wizardStep === 1 && (
                         <div className="space-y-4">
@@ -850,9 +832,10 @@ export default function UploadPage() {
                                 <div key={idx} className="relative space-y-2.5 rounded-2xl border border-orange-100 bg-orange-50/10 p-3.5">
                                   <button
                                     type="button"
-                                    onClick={() => removeExperience(idx)}
+                                    onClick={() => experience.remove(idx)}
                                     className="absolute right-3 top-3 text-xs bg-orange-50 hover:bg-orange-100 px-1.5 py-0.5 rounded-md text-orange-700 transition font-bold"
                                     title="Delete Job"
+                                    aria-label={exp.title ? `Delete ${exp.title}` : "Delete this experience entry"}
                                   >
                                     ✕
                                   </button>
@@ -864,7 +847,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={exp.title}
-                                        onChange={(e) => updateExperience(idx, "title", e.target.value)}
+                                        onChange={(e) => experience.update(idx, "title", e.target.value)}
                                         placeholder="Software Engineer"
                                       />
                                     </div>
@@ -874,7 +857,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={exp.company}
-                                        onChange={(e) => updateExperience(idx, "company", e.target.value)}
+                                        onChange={(e) => experience.update(idx, "company", e.target.value)}
                                         placeholder="TechCorp Solutions"
                                       />
                                     </div>
@@ -884,7 +867,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={exp.startDate}
-                                        onChange={(e) => updateExperience(idx, "startDate", e.target.value)}
+                                        onChange={(e) => experience.update(idx, "startDate", e.target.value)}
                                         placeholder="June 2024"
                                       />
                                     </div>
@@ -894,7 +877,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={exp.endDate}
-                                        onChange={(e) => updateExperience(idx, "endDate", e.target.value)}
+                                        onChange={(e) => experience.update(idx, "endDate", e.target.value)}
                                         placeholder="Present"
                                       />
                                     </div>
@@ -906,7 +889,7 @@ export default function UploadPage() {
                                       rows={2}
                                       className={`${inputStyle} resize-none`}
                                       value={exp.description}
-                                      onChange={(e) => updateExperience(idx, "description", e.target.value)}
+                                      onChange={(e) => experience.update(idx, "description", e.target.value)}
                                       placeholder="Responsibilities and accomplishments..."
                                     />
                                   </div>
@@ -944,9 +927,10 @@ export default function UploadPage() {
                                 <div key={idx} className="relative space-y-2.5 rounded-2xl border border-orange-100 bg-orange-50/10 p-3.5">
                                   <button
                                     type="button"
-                                    onClick={() => removeEducation(idx)}
+                                    onClick={() => education.remove(idx)}
                                     className="absolute right-3 top-3 text-xs bg-orange-50 hover:bg-orange-100 px-1.5 py-0.5 rounded-md text-orange-700 transition font-bold"
                                     title="Delete Education"
+                                    aria-label={edu.degree ? `Delete ${edu.degree}` : "Delete this education entry"}
                                   >
                                     ✕
                                   </button>
@@ -958,7 +942,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={edu.degree}
-                                        onChange={(e) => updateEducation(idx, "degree", e.target.value)}
+                                        onChange={(e) => education.update(idx, "degree", e.target.value)}
                                         placeholder="B.S. in Computer Science"
                                       />
                                     </div>
@@ -968,7 +952,7 @@ export default function UploadPage() {
                                         type="text"
                                         className={inputStyle}
                                         value={edu.graduationYear}
-                                        onChange={(e) => updateEducation(idx, "graduationYear", e.target.value)}
+                                        onChange={(e) => education.update(idx, "graduationYear", e.target.value)}
                                         placeholder="2026"
                                       />
                                     </div>
@@ -980,7 +964,7 @@ export default function UploadPage() {
                                       type="text"
                                       className={inputStyle}
                                       value={edu.institution}
-                                      onChange={(e) => updateEducation(idx, "institution", e.target.value)}
+                                      onChange={(e) => education.update(idx, "institution", e.target.value)}
                                       placeholder="State University"
                                     />
                                   </div>

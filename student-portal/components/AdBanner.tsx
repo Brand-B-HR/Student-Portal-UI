@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/config";
 
 export interface ActiveAd {
   id: number;
@@ -15,7 +16,7 @@ type Variant = "strip" | "sidebar";
 
 const frames: Record<Variant, string> = {
   /** Thin leaderboard that sits between content sections. */
-  strip: "h-[84px] sm:h-[104px]",
+  strip: "h-[104px] sm:h-[130px]",
   /** Compact box for the sidebar rail. */
   sidebar: "h-[150px]",
 };
@@ -39,8 +40,7 @@ export default function AdBanner({
     const ctrl = new AbortController();
     (async () => {
       try {
-        const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5033";
-        const res = await fetch(`${api}/api/adverts/active`, { signal: ctrl.signal });
+        const res = await fetch(`${API_BASE_URL}/api/adverts/active`, { signal: ctrl.signal });
         if (res.ok) setAds(await res.json());
       } catch {
         /* ads are non-critical — stay silent and render nothing */

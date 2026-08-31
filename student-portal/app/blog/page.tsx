@@ -1,47 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SiteShell from "@/components/SiteShell";
 import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
 import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
-import { fetchArticles, type Article } from "@/lib/articles";
+import { fetchArticles } from "@/lib/articles";
+import { useAsync } from "@/hooks/useAsync";
 
 const PAGE_SIZE = 9;
 
 export default function BlogPage() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const data = await fetchArticles(page, PAGE_SIZE, ctrl.signal);
-        if (!cancelled) {
-          setArticles(data.articles);
-          setTotal(data.total);
-        }
-      } catch (e) {
-        if (!cancelled && (e as Error).name !== "AbortError") setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      ctrl.abort();
-    };
-  }, [page]);
+  const { data, loading, error } = useAsync(
+    (signal) => fetchArticles(page, PAGE_SIZE, signal),
+    [page]
+  );
+  const articles = data?.articles ?? [];
+  const total = data?.total ?? 0;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -53,21 +30,11 @@ export default function BlogPage() {
   return (
     <SiteShell>
       {/* Masthead */}
-      <section className="border-b border-line bg-white">
-        <Container className="py-10 sm:py-12">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
-            Every story
-          </p>
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-            <h1 className="font-serif text-[32px] font-semibold leading-tight tracking-[-0.02em] text-ink-900 sm:text-[40px]">
-              All articles
-            </h1>
-            {!loading && !error && total > 0 && (
-              <p className="pb-1.5 text-sm text-ink-400">
-                {total} {total === 1 ? "article" : "articles"}
-              </p>
-            )}
-          </div>
+      <section className="border-b border-line bg-brand-100">
+        <Container className="py-6 sm:py-7">
+          <h1 className="font-serif text-[32px] font-semibold leading-tight tracking-[-0.02em] text-ink-900 sm:text-[40px]">
+            All articles
+          </h1>
         </Container>
       </section>
 

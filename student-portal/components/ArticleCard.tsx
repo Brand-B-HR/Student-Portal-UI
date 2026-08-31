@@ -20,7 +20,7 @@ import {
 export type ArticleCardVariant = "featured" | "standard" | "rail" | "list" | "text";
 
 /** Cover art, or a deterministic branded fallback when the article has none. */
-function Cover({
+export function Cover({
   article,
   className,
   sizes,
@@ -66,7 +66,7 @@ function Cover({
   );
 }
 
-function Meta({ article, className = "" }: { article: Article; className?: string }) {
+export function Meta({ article, className = "" }: { article: Article; className?: string }) {
   return (
     <div className={`flex items-center gap-1.5 text-[11px] text-ink-400 ${className}`}>
       <span>{formatDate(article.publishedAt ?? article.createdAt)}</span>
@@ -217,11 +217,15 @@ export default function ArticleCard({
           {article.title}
         </h3>
 
-        <p className="text-[13.5px] leading-relaxed text-ink-500 line-clamp-2">
-          {excerpt(article.contentHtml, 130)}
-        </p>
-
-        <Meta article={article} className="mt-auto border-t border-line pt-3.5" />
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3.5">
+          <Meta article={article} />
+          <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs font-bold text-brand-600 transition-colors group-hover:text-brand-700">
+            View blog
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-current stroke-[2.5]">
+              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
       </div>
     </Link>
   );

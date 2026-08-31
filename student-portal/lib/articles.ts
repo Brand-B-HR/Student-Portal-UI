@@ -1,5 +1,8 @@
 /** Shared article types + helpers. Previously duplicated across dashboard/blog pages. */
 
+import DOMPurify from "isomorphic-dompurify";
+import { API_BASE_URL as API } from "@/lib/config";
+
 export interface Article {
   id: string;
   title: string;
@@ -15,8 +18,6 @@ export interface ArticleListResponse {
   articles: Article[];
   total: number;
 }
-
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Cleans up rich HTML coming out of the admin portal's Quill editor.
@@ -34,6 +35,18 @@ export function normalizeArticleHtml(html: string): string {
     .replace(/&nbsp;/gi, " ")
     .replace(/\u00a0/g, " ")
     .replace(/<(h[1-6]|p)>\s*<\/\1>/gi, "");
+}
+
+/**
+ * Normalizes then sanitizes admin-authored article HTML before it is rendered via
+ * `dangerouslySetInnerHTML`. The admin portal is a separate, lower-trust surface,
+ * so content coming out of it is treated as untrusted \u2014 this strips scripts, event
+ * handlers, and other injection vectors while keeping normal rich-text formatting.
+ */
+export function sanitizeArticleHtml(html: string): string {
+  return DOMPurify.sanitize(normalizeArticleHtml(html), {
+    USE_PROFILES: { html: true },
+  });
 }
 
 export function stripHtml(html: string): string {
