@@ -1,16 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail } from "@/lib/firebase";
 import { bootstrapStudentProfile, getActiveCv, ApiError } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { toast } from "react-toastify";
 
+// useSearchParams() needs a Suspense boundary around it, or the whole page
+// bails out of static rendering at build time.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  // "Join free" CTAs across the site link here with ?mode=signup to land
+  // straight on the sign-up tab instead of sign-in.
+  const [mode, setMode] = useState<"login" | "signup">(
+    searchParams.get("mode") === "signup" ? "signup" : "login"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

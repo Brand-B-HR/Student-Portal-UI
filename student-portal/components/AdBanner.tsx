@@ -40,7 +40,7 @@ export default function AdBanner({
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/adverts/active`, { signal: ctrl.signal });
+        const res = await fetch(`${API_BASE_URL}/api/v1/adverts/active`, { signal: ctrl.signal });
         if (res.ok) setAds(await res.json());
       } catch {
         /* ads are non-critical — stay silent and render nothing */

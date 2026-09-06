@@ -160,6 +160,11 @@
 }
 .animate-fade-in { animation: fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* Homepage announcement ticker — scrolls one copy's width, then loops
+   seamlessly since the track renders the item list twice. */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marquee 26s linear infinite; }
+
 /* ─────────────────────────────────────────────────────────────
    Article body — rich HTML from the admin portal's Quill editor
    ───────────────────────────────────────────────────────────── */
