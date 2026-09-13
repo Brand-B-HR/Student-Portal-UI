@@ -7,18 +7,18 @@ import { auth, signOut, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
 import { initialsOf } from "@/lib/articles";
 
-// "/jobs" (app/jobs/page.tsx) is a coming-soon stub with no real data yet —
-// left out of primary nav until there's something to show. The page itself
-// still exists for direct/future linking.
-const NAV = [
-  { href: "/dashboard", label: "Home" },
-  { href: "/blog", label: "Articles" },
-  { href: "/profile", label: "Profile" },
-];
+/**
+ * "Tools" and "Grow" have no pages behind them yet — the backend has no
+ * resume-builder / coaching / community features today. They're shown as
+ * disabled dropdown items labelled "Soon" so the nav matches the intended
+ * information architecture without linking anywhere real.
+ */
+const TOOLS_ITEMS = ["Resume Builder", "Salary Calculator", "Interview Simulator"];
+const GROW_ITEMS = ["Career Coaching", "Community", "Newsletter"];
 
-function Wordmark({ compact = false }: { compact?: boolean }) {
+function Wordmark({ compact = false, href }: { compact?: boolean; href: string }) {
   return (
-    <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2.5">
+    <Link href={href} className="flex flex-shrink-0 items-center gap-2.5">
       <img
         src="/logo.png"
         alt=""
@@ -35,15 +35,86 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** "Tools" / "Grow" — a label with a caret that opens a list of stubbed, disabled items. */
+function StubDropdown({ label, items }: { label: string; items: string[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="flex items-center gap-1 py-5 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
+      >
+        {label}
+        <svg
+          viewBox="0 0 24 24"
+          className={`h-3.5 w-3.5 fill-none stroke-current stroke-[2.5] transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="animate-fade-in absolute left-0 top-[calc(100%+2px)] w-56 overflow-hidden rounded-[14px] border border-line bg-white p-1.5 shadow-[var(--shadow-pop)]"
+        >
+          {items.map((item) => (
+            <div
+              key={item}
+              role="menuitem"
+              aria-disabled
+              className="flex cursor-not-allowed items-center justify-between rounded-lg px-2.5 py-2 text-sm text-ink-400"
+            >
+              {item}
+              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">
+                Soon
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setAuthChecked(true);
+      }),
+    []
+  );
 
   // Close the account menu on outside click / Escape.
   useEffect(() => {
@@ -81,9 +152,15 @@ export default function SiteHeader() {
     router.replace("/login");
   }
 
+  const homeHref = user ? "/dashboard" : "/";
   const displayName = user?.displayName ?? user?.email ?? "Student";
   const isActive = (href: string) =>
-    href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+    href === "/" || href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+
+  const NAV = [
+    { href: homeHref, label: "Home" },
+    { href: "/blog", label: "Learn" },
+  ];
 
   return (
     <>
@@ -102,7 +179,7 @@ export default function SiteHeader() {
             </svg>
           </button>
 
-          <Wordmark />
+          <Wordmark href={homeHref} />
 
           {/* Desktop nav — underline indicator, no boxy pills */}
           <nav className="hidden flex-1 items-center gap-7 md:flex">
@@ -110,7 +187,7 @@ export default function SiteHeader() {
               const active = isActive(item.href);
               return (
                 <Link
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`relative py-5 text-sm transition-colors ${
@@ -128,81 +205,102 @@ export default function SiteHeader() {
                 </Link>
               );
             })}
+            <StubDropdown label="Tools" items={TOOLS_ITEMS} />
+            <StubDropdown label="Grow" items={GROW_ITEMS} />
           </nav>
 
           {/* Account */}
           <div className="ml-auto flex items-center gap-2 md:ml-0" ref={menuRef}>
-            <Link
-              href="/upload"
-              className="hidden rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600 sm:inline-flex"
-            >
-              Update CV
-            </Link>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-expanded={menuOpen}
-                aria-haspopup="menu"
-                aria-label="Account menu"
-                className="flex items-center gap-2 rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-brand-200"
-              >
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt=""
-                    className="h-8 w-8 rounded-full object-cover ring-1 ring-line-strong"
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700 ring-1 ring-brand-200">
-                    {initialsOf(displayName)}
-                  </span>
-                )}
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="animate-fade-in absolute right-0 top-[calc(100%+10px)] w-60 overflow-hidden rounded-[14px] border border-line bg-white shadow-[var(--shadow-pop)]"
+            {!authChecked ? null : user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="hidden text-sm font-semibold text-ink-700 transition-colors hover:text-brand-700 sm:inline-flex"
                 >
-                  <div className="border-b border-line px-4 py-3">
-                    <p className="truncate text-sm font-semibold text-ink-900">
-                      {user?.displayName ?? "Student"}
-                    </p>
-                    <p className="truncate text-xs text-ink-400">{user?.email}</p>
-                  </div>
+                  My Dashboard
+                </Link>
 
-                  <div className="p-1.5">
-                    <Link
-                      href="/profile"
-                      role="menuitem"
-                      className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
-                    >
-                      My CV &amp; Profile
-                    </Link>
-                    <Link
-                      href="/upload"
-                      role="menuitem"
-                      className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
-                    >
-                      Update CV
-                    </Link>
-                  </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    aria-expanded={menuOpen}
+                    aria-haspopup="menu"
+                    aria-label="Account menu"
+                    className="ml-2 flex items-center gap-2 rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-brand-200"
+                  >
+                    {user?.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover ring-1 ring-line-strong"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700 ring-1 ring-brand-200">
+                        {initialsOf(displayName)}
+                      </span>
+                    )}
+                  </button>
 
-                  <div className="border-t border-line p-1.5">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleSignOut}
-                      className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium text-ink-700 transition-colors hover:bg-red-50 hover:text-red-700"
+                  {menuOpen && (
+                    <div
+                      role="menu"
+                      className="animate-fade-in absolute right-0 top-[calc(100%+10px)] w-60 overflow-hidden rounded-[14px] border border-line bg-white shadow-[var(--shadow-pop)]"
                     >
-                      Sign out
-                    </button>
-                  </div>
+                      <div className="border-b border-line px-4 py-3">
+                        <p className="truncate text-sm font-semibold text-ink-900">
+                          {user?.displayName ?? "Student"}
+                        </p>
+                        <p className="truncate text-xs text-ink-400">{user?.email}</p>
+                      </div>
+
+                      <div className="p-1.5">
+                        <Link
+                          href="/profile"
+                          role="menuitem"
+                          className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
+                        >
+                          My CV &amp; Profile
+                        </Link>
+                        <Link
+                          href="/upload"
+                          role="menuitem"
+                          className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
+                        >
+                          Update CV
+                        </Link>
+                      </div>
+
+                      <div className="border-t border-line p-1.5">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleSignOut}
+                          className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium text-ink-700 transition-colors hover:bg-red-50 hover:text-red-700"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden text-sm font-semibold text-ink-700 transition-colors hover:text-brand-700 sm:inline-flex"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/login?mode=signup"
+                  className="inline-flex rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
+                >
+                  Join free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -217,7 +315,7 @@ export default function SiteHeader() {
 
           <div className="animate-fade-in absolute inset-y-0 left-0 flex w-[280px] flex-col bg-white shadow-[var(--shadow-pop)]">
             <div className="flex h-16 items-center justify-between border-b border-line px-5">
-              <Wordmark compact />
+              <Wordmark compact href={homeHref} />
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}
@@ -235,7 +333,7 @@ export default function SiteHeader() {
                 const active = isActive(item.href);
                 return (
                   <Link
-                    key={item.href}
+                    key={item.label}
                     href={item.href}
                     className={`rounded-[10px] px-3.5 py-3 text-[15px] transition-colors ${
                       active
@@ -247,37 +345,80 @@ export default function SiteHeader() {
                   </Link>
                 );
               })}
+
+              {[
+                { label: "Tools", items: TOOLS_ITEMS },
+                { label: "Grow", items: GROW_ITEMS },
+              ].map((group) => (
+                <div key={group.label} className="mt-1 px-3.5 py-2">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-300">
+                    {group.label}
+                  </p>
+                  <div className="mt-1.5 space-y-0.5">
+                    {group.items.map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center justify-between rounded-lg py-1.5 text-sm text-ink-400"
+                      >
+                        {item}
+                        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">
+                          Soon
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             <div className="border-t border-line p-3">
-              <Link
-                href="/upload"
-                className="mb-2 flex items-center justify-center rounded-full bg-brand-500 px-4 py-2.5 text-sm font-bold text-white"
-              >
-                Update CV
-              </Link>
-              <div className="flex items-center gap-2.5 px-1 py-2">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">
-                    {initialsOf(displayName)}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-ink-900">
-                    {user?.displayName ?? "Student"}
-                  </p>
-                  <p className="truncate text-[11px] text-ink-400">{user?.email}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="w-full rounded-lg px-1 py-2 text-left text-sm font-medium text-ink-600 transition-colors hover:text-red-700"
-              >
-                Sign out
-              </button>
+              {user ? (
+                <>
+                  <Link
+                    href="/upload"
+                    className="mb-2 flex items-center justify-center rounded-full bg-brand-500 px-4 py-2.5 text-sm font-bold text-white"
+                  >
+                    Update CV
+                  </Link>
+                  <div className="flex items-center gap-2.5 px-1 py-2">
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">
+                        {initialsOf(displayName)}
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-ink-900">
+                        {user?.displayName ?? "Student"}
+                      </p>
+                      <p className="truncate text-[11px] text-ink-400">{user?.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="w-full rounded-lg px-1 py-2 text-left text-sm font-medium text-ink-600 transition-colors hover:text-red-700"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login?mode=signup"
+                    className="mb-2 flex items-center justify-center rounded-full bg-brand-500 px-4 py-2.5 text-sm font-bold text-white"
+                  >
+                    Join free
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center rounded-full border border-line-strong px-4 py-2.5 text-sm font-semibold text-ink-800"
+                  >
+                    Sign in
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

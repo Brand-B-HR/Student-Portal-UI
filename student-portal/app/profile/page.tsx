@@ -354,9 +354,37 @@ export default function ProfilePage() {
                 subtitle="Latest visible review feedback from the portal administrators."
               />
               <Card className="mt-6">
-                <p className="text-sm text-ink-400">
-                  {loading ? "Loading feedback…" : "Review feedback will appear here once reviewed."}
-                </p>
+                {loading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                ) : !currentCv ? (
+                  <p className="text-sm text-ink-400">Upload a CV to receive reviewer feedback.</p>
+                ) : currentCv.feedbackText ? (
+                  <div className="flex gap-3">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-brand-100 text-brand-700">
+                      <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-none stroke-current stroke-[2]">
+                        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-ink-900">Reviewer note</span>
+                        <StatusBadge status={currentCv.feedbackStatus} />
+                      </div>
+                      <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-ink-600">
+                        {currentCv.feedbackText}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ink-400">
+                    {currentCv.feedbackStatus === "pending"
+                      ? "Your CV is in the review queue — feedback will appear here once it's reviewed."
+                      : "No written feedback was left for this review."}
+                  </p>
+                )}
               </Card>
             </div>
 

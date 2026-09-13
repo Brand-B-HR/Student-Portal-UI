@@ -1,7 +1,11 @@
 /** Shared article types + helpers. Previously duplicated across dashboard/blog pages. */
 
 import DOMPurify from "isomorphic-dompurify";
-import { API_BASE_URL as API } from "@/lib/config";
+import { API_BASE_URL } from "@/lib/config";
+
+// BlogController is versioned (`api/v{version}/...` alongside the unversioned
+// `api/...` alias) — call through v1 explicitly.
+const API = `${API_BASE_URL}/api/v1`;
 
 export interface Article {
   id: string;
@@ -109,7 +113,7 @@ export async function fetchArticles(
   signal?: AbortSignal
 ): Promise<ArticleListResponse> {
   const res = await fetch(
-    `${API}/api/blog/articles?page=${page}&pageSize=${pageSize}`,
+    `${API}/blog/articles?page=${page}&pageSize=${pageSize}`,
     { signal }
   );
   if (!res.ok) throw new Error("Failed to load articles");
@@ -118,7 +122,7 @@ export async function fetchArticles(
 }
 
 export async function fetchArticle(id: string, signal?: AbortSignal): Promise<Article> {
-  const res = await fetch(`${API}/api/blog/articles/${id}`, { signal });
+  const res = await fetch(`${API}/blog/articles/${id}`, { signal });
   if (res.status === 404) throw new Error("not_found");
   if (!res.ok) throw new Error("failed");
   return res.json();

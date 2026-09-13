@@ -1,113 +1,112 @@
 "use client";
 
-import { useState } from "react";
-import SiteShell from "@/components/SiteShell";
+import { useMemo, useState } from "react";
+import PublicShell from "@/components/PublicShell";
 import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
+import Badge from "@/components/ui/Badge";
 import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
 import { fetchArticles } from "@/lib/articles";
+import { CATEGORIES, categoryOf, isPremium } from "@/lib/categories";
 import { useAsync } from "@/hooks/useAsync";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 24;
+const TABS = ["All", ...CATEGORIES] as const;
 
 export default function BlogPage() {
-  const [page, setPage] = useState(1);
-  const { data, loading, error } = useAsync(
-    (signal) => fetchArticles(page, PAGE_SIZE, signal),
-    [page]
-  );
+  const [tab, setTab] = useState<(typeof TABS)[number]>("All");
+  // One larger page fetched up front — filtering happens client-side against
+  // the category tabs, so paging the API against a filtered subset would
+  // either under-fill a page or require a server-side category column that
+  // doesn't exist yet.
+  const { data, loading, error } = useAsync((signal) => fetchArticles(1, PAGE_SIZE, signal), []);
   const articles = data?.articles ?? [];
-  const total = data?.total ?? 0;
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  function goTo(next: number) {
-    setPage(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const filtered = useMemo(
+    () => (tab === "All" ? articles : articles.filter((a) => categoryOf(a) === tab)),
+    [articles, tab]
+  );
 
   return (
-    <SiteShell>
+    <PublicShell>
       {/* Masthead */}
       <section className="border-b border-line bg-brand-100">
         <Container className="py-6 sm:py-7">
-          <h1 className="font-serif text-[32px] font-semibold leading-tight tracking-[-0.02em] text-ink-900 sm:text-[40px]">
-            All articles
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
+            Articles &amp; guides
+          </p>
+          <h1 className="mt-1.5 font-serif text-[32px] font-semibold leading-tight tracking-[-0.02em] text-ink-900 sm:text-[40px]">
+            Career intelligence, written by the best.
           </h1>
         </Container>
       </section>
 
       <Container className="py-10 sm:py-12">
-        {error ? (
-          <ErrorState
-            message="Could not load articles. Please try again later."
-            onRetry={() => goTo(page)}
-          />
-        ) : loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <ArticleCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : articles.length === 0 ? (
-          <EmptyState
-            icon={
-              <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-            title="No articles yet"
-            description="Check back soon — our career team is working on new guides for you."
-          />
-        ) : (
-          <>
+        {/* Category tabs */}
+        <div className="flex flex-wrap gap-2">
+          {TABS.map((t) => {
+            const active = t === tab;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.04em] transition-colors ${
+                  active
+                    ? "border-brand-500 bg-brand-500 text-white"
+                    : "border-line-strong bg-white text-ink-600 hover:border-brand-500 hover:text-brand-700"
+                }`}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8">
+          {error ? (
+            <ErrorState
+              message="Could not load articles. Please try again later."
+              onRetry={() => window.location.reload()}
+            />
+          ) : loading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((a, i) => (
-                <ArticleCard key={a.id} article={a} variant="standard" priority={i < 3} />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ArticleCardSkeleton key={i} />
               ))}
             </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon={
+                <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+              title={tab === "All" ? "No articles yet" : `No ${tab.toLowerCase()} articles yet`}
+              description="Check back soon — our career team is working on new guides for you."
+            />
+          ) : (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.map((a, i) => (
+                  <div key={a.id} className="relative">
+                    <div className="pointer-events-none absolute left-3.5 top-3.5 z-10 flex gap-1.5">
+                      <Badge tone="outline" className="bg-white/90">
+                        {categoryOf(a)}
+                      </Badge>
+                      {isPremium(a) && <Badge tone="solid">Premium</Badge>}
+                    </div>
+                    <ArticleCard article={a} variant="standard" priority={i < 3} />
+                  </div>
+                ))}
+              </div>
 
-            {/* Small ad strip below the grid */}
-            <AdBanner variant="strip" className="mt-12" />
-
-            {totalPages > 1 && (
-              <nav
-                aria-label="Pagination"
-                className="mt-12 flex items-center justify-center gap-2"
-              >
-                <button
-                  type="button"
-                  onClick={() => goTo(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="flex h-10 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 text-sm font-semibold text-ink-700 transition disabled:opacity-35 enabled:hover:border-brand-500 enabled:hover:text-brand-700"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[2.5]">
-                    <path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Prev
-                </button>
-
-                <span className="px-3 text-sm text-ink-500">
-                  Page <span className="font-semibold text-ink-900">{page}</span> of {totalPages}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => goTo(Math.min(totalPages, page + 1))}
-                  disabled={page === totalPages}
-                  className="flex h-10 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 text-sm font-semibold text-ink-700 transition disabled:opacity-35 enabled:hover:border-brand-500 enabled:hover:text-brand-700"
-                >
-                  Next
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[2.5]">
-                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </nav>
-            )}
-          </>
-        )}
+              <AdBanner variant="strip" className="mt-12" />
+            </>
+          )}
+        </div>
       </Container>
-    </SiteShell>
+    </PublicShell>
   );
 }

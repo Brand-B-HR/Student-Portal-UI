@@ -1,5 +1,10 @@
 import { getIdToken } from "@/lib/firebase";
-import { API_BASE_URL as API } from "@/lib/config";
+import { API_BASE_URL } from "@/lib/config";
+
+// All Student.Portal.API controllers are versioned (`api/v{version}/...`
+// alongside the unversioned `api/...` alias) — call through the v1 path
+// explicitly so this stays pinned as later versions are added.
+const API = `${API_BASE_URL}/api/v1`;
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await getIdToken();
@@ -60,7 +65,7 @@ export interface StudentDto {
 }
 
 export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): Promise<StudentDto> {
-  const res = await fetch(`${API}/api/student/auth/bootstrap`, {
+  const res = await fetch(`${API}/student/auth/bootstrap`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(payload),
@@ -117,6 +122,7 @@ export interface CvRecord {
   version: number;
   isActive: boolean;
   feedbackStatus: string;
+  feedbackText?: string;
   extractionStatus: string;
   extractedDataJson?: string;
   uploadedAt: string;
@@ -127,7 +133,7 @@ export async function getCvUploadUrl(
   mimeType: string,
   fileSize: number
 ): Promise<CvUploadUrlResponse> {
-  const res = await fetch(`${API}/api/student/cv/upload-url`, {
+  const res = await fetch(`${API}/student/cv/upload-url`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, mimeType, fileSize }),
@@ -155,7 +161,7 @@ export async function confirmCvUpload(
   fileSize: number,
   mimeType: string
 ): Promise<CvConfirmResponse> {
-  const res = await fetch(`${API}/api/student/cv/confirm`, {
+  const res = await fetch(`${API}/student/cv/confirm`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, storageKey, fileSize, mimeType }),
@@ -173,7 +179,7 @@ export interface SaveProfilePayload {
 }
 
 export async function saveProfile(payload: SaveProfilePayload): Promise<void> {
-  const res = await fetch(`${API}/api/student/cv/save-profile`, {
+  const res = await fetch(`${API}/student/cv/save-profile`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(payload),
@@ -182,7 +188,7 @@ export async function saveProfile(payload: SaveProfilePayload): Promise<void> {
 }
 
 export async function getActiveCv(): Promise<{ cv: CvRecord; downloadUrl: string } | null> {
-  const res = await fetch(`${API}/api/student/cv/active`, {
+  const res = await fetch(`${API}/student/cv/active`, {
     headers: await authHeaders(),
   });
   if (res.status === 404) return null;
@@ -226,7 +232,7 @@ export async function getVideoUploadUrl(
   mimeType: string,
   fileSize: number
 ): Promise<VideoUploadUrlResponse> {
-  const res = await fetch(`${API}/api/student/video/upload-url`, {
+  const res = await fetch(`${API}/student/video/upload-url`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, mimeType, fileSize }),
@@ -244,7 +250,7 @@ export async function confirmVideoUpload(
   fileSize: number,
   mimeType: string
 ): Promise<void> {
-  const res = await fetch(`${API}/api/student/video/confirm`, {
+  const res = await fetch(`${API}/student/video/confirm`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, storageKey, fileSize, mimeType }),
@@ -253,7 +259,7 @@ export async function confirmVideoUpload(
 }
 
 export async function getActiveVideo(): Promise<{ video: unknown; downloadUrl: string } | null> {
-  const res = await fetch(`${API}/api/student/video/active`, {
+  const res = await fetch(`${API}/student/video/active`, {
     headers: await authHeaders(),
   });
   if (res.status === 404) return null;
