@@ -1,24 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PublicShell from "@/components/PublicShell";
 import Container from "@/components/ui/Container";
-import ArticleCard, { Cover } from "@/components/ArticleCard";
+import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
 import { Spinner, ErrorState } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import { fetchArticles, authorOf, formatDate, readTime } from "@/lib/articles";
 import { useAsync } from "@/hooks/useAsync";
-
-const TICKER_ITEMS = [
-  "Resume templates updated for 2026",
-  "Salary negotiation workshop — this Friday",
-  "500+ career guides available",
-  "Free CV review for new members",
-  "New: Senior PM Interview Mock",
-];
 
 const STATS = [
   { value: "42k", label: "Members" },
@@ -67,18 +60,6 @@ export default function HomePage() {
 
   return (
     <PublicShell>
-      {/* ── Announcement ticker ─────────────────────────────────── */}
-      <div className="overflow-hidden border-b border-brand-600 bg-brand-500 py-2 text-white">
-        <div className="animate-marquee flex w-max gap-16 whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em]">
-          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-            <span key={i} className="flex items-center gap-2">
-              <span aria-hidden>★</span>
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="border-b border-line bg-brand-100/60">
         <Container className="grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-8">
@@ -121,28 +102,35 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Collage — uses real cover art when available, brand tiles otherwise */}
+          {/* Collage — fixed marketing images */}
           <div className="grid grid-cols-2 gap-3.5">
-            <div className="row-span-2 overflow-hidden rounded-[14px]">
-              {articles[0] ? (
-                <Cover article={articles[0]} className="h-full w-full min-h-[280px]" priority />
-              ) : (
-                <div className="h-full min-h-[280px] w-full bg-gradient-to-br from-brand-300 to-brand-600" />
-              )}
+            <div className="relative row-span-2 min-h-[280px] overflow-hidden rounded-[14px]">
+              <Image
+                src="/images/3.png"
+                alt="Career growth"
+                fill
+                priority
+                sizes="(min-width: 1024px) 27vw, 50vw"
+                className="object-cover"
+              />
             </div>
-            <div className="overflow-hidden rounded-[14px]">
-              {articles[1] ? (
-                <Cover article={articles[1]} className="aspect-square w-full" />
-              ) : (
-                <div className="aspect-square w-full bg-gradient-to-br from-ink-700 to-brand-500" />
-              )}
+            <div className="relative aspect-square w-full overflow-hidden rounded-[14px]">
+              <Image
+                src="/images/1.png"
+                alt="Career advice"
+                fill
+                sizes="(min-width: 1024px) 27vw, 50vw"
+                className="object-cover"
+              />
             </div>
-            <div className="overflow-hidden rounded-[14px]">
-              {articles[2] ? (
-                <Cover article={articles[2]} className="aspect-square w-full" />
-              ) : (
-                <div className="aspect-square w-full bg-gradient-to-br from-brand-500 to-ink-800" />
-              )}
+            <div className="relative aspect-square w-full overflow-hidden rounded-[14px]">
+              <Image
+                src="/images/2.png"
+                alt="Career insights"
+                fill
+                sizes="(min-width: 1024px) 27vw, 50vw"
+                className="object-cover"
+              />
             </div>
           </div>
         </Container>
