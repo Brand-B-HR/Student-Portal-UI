@@ -14,15 +14,27 @@ jobs:
           echo "environment: ${{ github.event.deployment.environment }}"
 
   notify:
-    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment.ref, 'qa')
+    if: |
+      github.event.deployment_status.state == 'success' &&
+      (contains(github.event.deployment.ref, 'qa') || contains(github.event.deployment.ref, 'uat'))
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve environment label
+        id: env
+        run: |
+          if [[ "${{ contains(github.event.deployment.ref, 'uat') }}" == "true" ]]; then
+            echo "label=UAT" >> "$GITHUB_OUTPUT"
+          else
+            echo "label=QA" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Send Slack notification
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DEPLOY_URL: ${{ github.event.deployment_status.target_url }}
           SHA: ${{ github.event.deployment.sha }}
+          ENV_LABEL: ${{ steps.env.outputs.label }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\": \":rocket: *QA deploy succeeded*\n<${DEPLOY_URL}|View deployment> — commit \`${SHA:0:7}\`\"}" \
+            --data "{\"text\": \":rocket: *${ENV_LABEL} deploy succeeded*\n<${DEPLOY_URL}|View deployment> — commit \`${SHA:0:7}\`\"}" \
             "$SLACK_WEBHOOK_URL"
