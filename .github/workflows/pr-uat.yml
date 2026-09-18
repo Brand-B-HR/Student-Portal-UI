@@ -1,10 +1,8 @@
-name: CI
+name: PR Checks (into UAT)
 
 on:
   pull_request:
-    branches: [qa, uat, main]
-  push:
-    branches: [qa, uat]
+    branches: [uat]
 
 defaults:
   run:
@@ -14,7 +12,6 @@ jobs:
   build-and-test:
     name: Lint, test, build
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'uat' && 'uat' || 'qa' }}
     steps:
       - uses: actions/checkout@v4
 
