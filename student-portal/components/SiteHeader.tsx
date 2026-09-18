@@ -107,6 +107,15 @@ export default function SiteHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Close any open overlay when the route changes. Adjusted during render
+  // (rather than in an effect) per https://react.dev/learn/you-might-not-need-an-effect
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setDrawerOpen(false);
+    setMenuOpen(false);
+  }
+
   useEffect(
     () =>
       onAuthStateChanged(auth, (u) => {
@@ -132,12 +141,6 @@ export default function SiteHeader() {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-
-  // Route change closes any open overlay.
-  useEffect(() => {
-    setDrawerOpen(false);
-    setMenuOpen(false);
-  }, [pathname]);
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {

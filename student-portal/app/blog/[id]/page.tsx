@@ -201,7 +201,7 @@ export default function BlogArticlePage() {
             </div>
 
             {/* Comments — front-end only for now, and only worth showing to readers who saw the article */}
-            {signedIn && <CommentSection articleId={article.id} />}
+            {signedIn && <CommentSection key={article.id} articleId={article.id} />}
 
             <AdBanner variant="strip" className="mt-12" />
 

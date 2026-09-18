@@ -824,7 +824,7 @@ export default function UploadPage() {
 
                           {profileData.currentCv.experience.length === 0 ? (
                             <div className="text-center py-8 rounded-2xl border border-dashed border-orange-200 bg-orange-50/10 text-ink-400 text-xs">
-                              No experience items added. Click "+ Add Job" to create one.
+                              No experience items added. Click &ldquo;+ Add Job&rdquo; to create one.
                             </div>
                           ) : (
                             <div className="space-y-4">
@@ -919,7 +919,7 @@ export default function UploadPage() {
 
                           {profileData.currentCv.education.length === 0 ? (
                             <div className="text-center py-8 rounded-2xl border border-dashed border-orange-200 bg-orange-50/10 text-ink-400 text-xs">
-                              No academic details added yet. Click "+ Add Education" to create.
+                              No academic details added yet. Click &ldquo;+ Add Education&rdquo; to create.
                             </div>
                           ) : (
                             <div className="space-y-4">
@@ -980,7 +980,7 @@ export default function UploadPage() {
                         <div className="space-y-4">
                           <div>
                             <h2 className="text-lg font-bold text-forest-900">Skills</h2>
-                            <p className="text-xs text-ink-400 mt-0.5">Extracted skills tags are shown below. Click '✕' to remove, or type to add custom pills.</p>
+                            <p className="text-xs text-ink-400 mt-0.5">Extracted skills tags are shown below. Click &lsquo;✕&rsquo; to remove, or type to add custom pills.</p>
                           </div>
 
                           <div className="space-y-2.5">
