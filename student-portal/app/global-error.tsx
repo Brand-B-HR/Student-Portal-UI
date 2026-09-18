@@ -75,6 +75,7 @@ export default function GlobalError({
             >
               Try again
             </button>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- this file replaces the whole tree on a root-layout crash, so it can't rely on next/link's router context */}
             <a
               href="/"
               style={{

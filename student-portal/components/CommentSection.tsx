@@ -103,12 +103,6 @@ export default function CommentSection({ articleId }: { articleId: string }) {
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
-  // Reset the thread when navigating between articles.
-  useEffect(() => {
-    setComments(SAMPLE_COMMENTS);
-    setDraft("");
-  }, [articleId]);
-
   // Grow the textarea with its content instead of scrolling inside it.
   useEffect(() => {
     const el = textareaRef.current;
