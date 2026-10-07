@@ -42,7 +42,7 @@ export default function SiteFooter() {
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="" className="h-9 w-9 rounded-[9px] object-contain" />
               <span className="font-serif text-[19px] font-semibold tracking-[-0.02em] text-ink-900">
-                CareerBuild
+               Stars
               </span>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-500">
@@ -83,7 +83,7 @@ export default function SiteFooter() {
 
         <div className="mt-10 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-ink-400">
-            &copy; {new Date().getFullYear()} CareerBuild. All rights reserved.
+            &copy; {new Date().getFullYear()} Stars. All rights reserved.
           </p>
           <p className="font-serif text-xs italic text-ink-400">
             Built for students, by people who hire them.

@@ -141,9 +141,9 @@ function LoginForm() {
 
           <div className="relative z-10">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="CareerBuild" className="h-9 w-9 rounded-xl object-contain bg-white/10 p-0.5" />
+              <img src="/logo.png" alt="Stars" className="h-9 w-9 rounded-xl object-contain bg-white/10 p-0.5" />
               <span className="font-display text-[15px] font-semibold tracking-wide text-leaf-300">
-                CareerBuild
+                Stars
               </span>
             </div>
 

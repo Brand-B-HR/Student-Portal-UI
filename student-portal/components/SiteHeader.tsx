@@ -21,16 +21,16 @@ function Wordmark({ compact = false, href }: { compact?: boolean; href: string }
     <Link href={href} className="flex flex-shrink-0 items-center gap-2.5">
       <img
         src="/logo.png"
-        alt=""
-        className={`rounded-[9px] object-contain ${compact ? "h-8 w-8" : "h-9 w-9"}`}
+        alt="Stars logo"
+        className={`rounded-[10px] object-contain ${compact ? "h-15 w-24" : "h-20 w-24"}`}
       />
-      <span
+      {/* <span
         className={`font-serif font-semibold tracking-[-0.02em] text-ink-900 ${
           compact ? "text-[17px]" : "text-[19px]"
         }`}
       >
         CareerBuild
-      </span>
+      </span> */}
     </Link>
   );
 }
