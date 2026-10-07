@@ -14,9 +14,9 @@ import { fetchArticles, authorOf, formatDate, readTime } from "@/lib/articles";
 import { useAsync } from "@/hooks/useAsync";
 
 const STATS = [
-  { value: "42k", label: "Members" },
-  { value: "600+", label: "Articles" },
-  { value: "180+", label: "Companies covered" },
+  { value: "1k", label: "Members" },
+  { value: "60+", label: "Articles" },
+  { value: "20+", label: "Companies covered" },
 ];
 
 /**
@@ -64,17 +64,18 @@ export default function HomePage() {
       <section className="border-b border-line bg-brand-100/60">
         <Container className="grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
+            {/* <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
               Career guidance platform
-            </p>
+            </p> */}
             <h1 className="mt-3.5 font-serif text-[40px] font-semibold leading-[1.05] tracking-[-0.02em] text-ink-900 sm:text-[52px]">
-              Advice that actually
+             
+             Creating Pathways for 
               <br />
-              <em className="text-brand-600">moves careers.</em>
+              <em className="text-brand-600">future leaders.</em>
             </h1>
             <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-ink-600 sm:text-base">
-              Expert articles, video guides, and real interview prep — curated by
-              practitioners, not algorithms. Join 42,000 professionals levelling up.
+              Expert articles, video guides, and real interview prep  curated by
+              practitioners, not algorithms. Join 1000 professionals levelling up.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -221,7 +222,7 @@ export default function HomePage() {
             href="/login?mode=signup"
             className="mt-7 inline-flex items-center rounded-full bg-ink-900 px-7 py-3.5 text-sm font-bold text-white transition-colors hover:bg-ink-800"
           >
-            Join CareerBuild — it&rsquo;s free
+            Join Stars - it&rsquo;s free
           </Link>
         </Container>
       </section>

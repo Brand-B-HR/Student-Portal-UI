@@ -5,8 +5,8 @@ import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
   title: {
-    default: "CareerBuild",
-    template: "%s · CareerBuild",
+    default: "Stars",
+    template: "%s · Stars",
   },
   description:
     "Career guidance, hiring insight, and CV tools — written by the people who actually do the hiring.",
