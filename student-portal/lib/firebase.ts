@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   signOut as _signOut,
   sendEmailVerification,
+  updateProfile,
   reload,
   User,
 } from "firebase/auth";
@@ -48,8 +49,21 @@ export async function signInWithEmail(email: string, password: string) {
   return result;
 }
 
-export async function signUpWithEmail(email: string, password: string) {
+/**
+ * Creates the account and, when a name is supplied, writes it to the Firebase
+ * profile before anything else runs. The header, profile heading and comment
+ * author name all read user.displayName, so setting it here is what keeps
+ * those from falling back to "Student" or the email prefix.
+ */
+export async function signUpWithEmail(email: string, password: string, displayName?: string) {
   const result = await createUserWithEmailAndPassword(auth, email, password);
+  const name = displayName?.trim();
+  if (name) {
+    await updateProfile(result.user, { displayName: name });
+    // updateProfile doesn't re-emit on onAuthStateChanged, so refresh the
+    // local user object to make the new name visible without a reload.
+    await reload(result.user);
+  }
   await sendEmailVerification(result.user);
   return result;
 }

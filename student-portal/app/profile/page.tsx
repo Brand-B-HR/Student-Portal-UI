@@ -9,7 +9,7 @@ import AdBanner from "@/components/AdBanner";
 import { Skeleton } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
-import { getActiveCv, getActiveVideo, bootstrapStudentProfile, StudentDto, CvRecord, ExtractedCvData } from "@/lib/api";
+import { getActiveCv, getActiveVideo, bootstrapStudentProfile, StudentDto, CvRecord, ExtractedCvData, CV_FEEDBACK_STATUS_LABELS } from "@/lib/api";
 import { mapExtractedCvData } from "@/lib/cvMapping";
 import { toast } from "react-toastify";
 
@@ -49,8 +49,12 @@ function parseExtracted(json?: string): ExtractedCvData | null {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  extracted: "bg-green-100 text-green-700",
+  // CV feedback (reviewer workflow)
+  submitted_for_review: "bg-brand-100 text-brand-700",
+  need_enhancements: "bg-amber-100 text-amber-700",
   approved: "bg-green-100 text-green-700",
+  // CV extraction (async parse) + video
+  extracted: "bg-green-100 text-green-700",
   processing: "bg-blue-100 text-blue-700",
   pending: "bg-brand-100 text-brand-700",
   failed: "bg-red-100 text-red-700",
@@ -58,6 +62,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  ...CV_FEEDBACK_STATUS_LABELS,
   pending: "Pending review",
 };
 
@@ -177,7 +182,7 @@ export default function ProfilePage() {
                       <>
                         <p className="truncate text-xs text-ink-500">{currentCv?.fileName}</p>
                         <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge status={currentCv?.feedbackStatus ?? "pending"} />
+                          <StatusBadge status={currentCv?.feedbackStatus ?? "submitted_for_review"} />
                         </div>
                         <div className="mt-auto flex gap-2 pt-2">
                           <button
@@ -380,7 +385,7 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <p className="text-sm text-ink-400">
-                    {currentCv.feedbackStatus === "pending"
+                    {currentCv.feedbackStatus === "submitted_for_review"
                       ? "Your CV is in the review queue — feedback will appear here once it's reviewed."
                       : "No written feedback was left for this review."}
                   </p>

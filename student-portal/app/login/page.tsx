@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail } from "@/lib/firebase";
-import { bootstrapStudentProfile, getActiveCv, ApiError } from "@/lib/api";
+import { bootstrapStudentProfile, ApiError } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { toast } from "react-toastify";
 
@@ -17,6 +17,17 @@ export default function LoginPage() {
   );
 }
 
+/**
+ * Splits a typed full name on the LAST space, so multi-word given names
+ * ("Mary Anne Smith") keep the surname intact. A single word becomes the
+ * first name with an empty last name.
+ */
+function splitName(name: string): { firstName: string; lastName: string } {
+  const i = name.lastIndexOf(" ");
+  if (i === -1) return { firstName: name, lastName: "" };
+  return { firstName: name.slice(0, i), lastName: name.slice(i + 1) };
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,6 +37,7 @@ function LoginForm() {
   const [mode, setMode] = useState<"login" | "signup">(
     searchParams.get("mode") === "signup" ? "signup" : "login"
   );
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,12 +46,7 @@ function LoginForm() {
   async function redirectAfterAuth() {
     try {
       await bootstrapStudentProfile();
-      const activeCv = await getActiveCv();
-      if (activeCv) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/upload");
-      }
+      router.replace("/dashboard");
     } catch (e: unknown) {
       if (e instanceof ApiError && e.status === 403) {
         router.replace("/verify-email");
@@ -51,7 +58,7 @@ function LoginForm() {
         router.replace("/login");
         return;
       }
-      router.replace("/upload");
+      router.replace("/dashboard");
     }
   }
 
@@ -81,13 +88,18 @@ function LoginForm() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        const name = fullName.trim().replace(/\s+/g, " ");
+        if (!name) {
+          toast.error("Please enter your full name.");
+          return;
+        }
         setIsSigningUp(true);
-        await signUpWithEmail(email.trim(), password);
+        await signUpWithEmail(email.trim(), password, name);
         try {
-          // Name and study details are collected later, on the profile page.
-          await bootstrapStudentProfile({ email: email.trim() });
+          // Study details are still collected later, on the profile page.
+          await bootstrapStudentProfile({ email: email.trim(), ...splitName(name) });
           toast.success("Account created! Welcome aboard.");
-          router.replace("/upload");
+          router.replace("/dashboard");
         } catch (e: unknown) {
           if (e instanceof ApiError && e.status === 403) {
             toast.success("Account created! Check your email to verify your account.");
@@ -211,6 +223,31 @@ function LoginForm() {
             </div>
 
             <div className="mt-6 space-y-4 text-left">
+              {/* Full name — sign-up only. Sets the Firebase displayName the
+                  header, profile heading and comment author name all read. */}
+              {mode === "signup" && (
+                <div>
+                  <label htmlFor="fullName" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
+                    Full name
+                  </label>
+                  <div className="relative flex items-center">
+                    <svg className="pointer-events-none absolute left-3.5 h-[18px] w-[18px] text-ink-400" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="6.5" r="3" stroke="currentColor" strokeWidth="1.4" />
+                      <path d="M4 16c0-2.5 2.7-4 6-4s6 1.5 6 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      id="fullName"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Jason Miller"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full rounded-xl border border-mint-100 bg-mint-50/60 py-2.5 pr-3.5 pl-10 text-sm text-ink-900 outline-none transition focus:border-leaf-500 focus:bg-white focus:ring-2 focus:ring-leaf-100"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Email */}
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-ink-600">
