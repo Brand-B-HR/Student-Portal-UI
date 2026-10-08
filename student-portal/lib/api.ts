@@ -114,6 +114,22 @@ export interface ExtractedCvData {
   experience?: CvExperienceItem[];
   rawTextLength?: number;
 }
+/**
+ * Reviewer workflow states for an uploaded CV. A newly confirmed upload starts
+ * at "submitted_for_review"; a reviewer then moves it to one of the other two.
+ * Distinct from extractionStatus, which tracks the async PDF parse.
+ */
+export type CvFeedbackStatus =
+  | "submitted_for_review"
+  | "need_enhancements"
+  | "approved";
+
+export const CV_FEEDBACK_STATUS_LABELS: Record<CvFeedbackStatus, string> = {
+  submitted_for_review: "Submitted for Review",
+  need_enhancements: "Need Enhancements",
+  approved: "Approved",
+};
+
 export interface CvRecord {
   id: number;
   fileName: string;
@@ -121,7 +137,7 @@ export interface CvRecord {
   mimeType: string;
   version: number;
   isActive: boolean;
-  feedbackStatus: string;
+  feedbackStatus: CvFeedbackStatus;
   feedbackText?: string;
   extractionStatus: string;
   extractedDataJson?: string;

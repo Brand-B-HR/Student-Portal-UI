@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, onAuthStateChanged, refreshUser, resendVerificationEmail, signOut } from "@/lib/firebase";
-import { bootstrapStudentProfile, getActiveCv, ApiError } from "@/lib/api";
+import { bootstrapStudentProfile, ApiError } from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function VerifyEmailPage() {
@@ -44,8 +44,7 @@ export default function VerifyEmailPage() {
         return;
       }
       await bootstrapStudentProfile();
-      const activeCv = await getActiveCv();
-      router.replace(activeCv ? "/dashboard" : "/upload");
+      router.replace("/dashboard");
     } catch (e: unknown) {
       if (e instanceof ApiError && e.status === 403) {
         toast.error("Still not verified. Please click the link in the email first.");
