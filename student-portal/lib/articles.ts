@@ -97,6 +97,19 @@ export function authorOf(article: Article): string {
   return article.authorName?.trim() || "CareerBuild";
 }
 
+/**
+ * Newest first, by publish date, falling back to createdAt for anything the
+ * admin portal hasn't stamped a publishedAt on.
+ *
+ * The list endpoint's ordering isn't part of its contract, so sections that
+ * claim recency sort here rather than trusting the order rows arrive in.
+ * Returns a new array — the caller's list is left alone.
+ */
+export function sortByRecency(articles: Article[]): Article[] {
+  const when = (a: Article) => +new Date(a.publishedAt ?? a.createdAt);
+  return [...articles].sort((a, b) => when(b) - when(a));
+}
+
 export function initialsOf(name: string): string {
   return name
     .split(/\s+/)

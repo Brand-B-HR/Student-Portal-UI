@@ -8,9 +8,11 @@ import {
   GoogleAuthProvider,
   signOut as _signOut,
   sendEmailVerification,
+  applyActionCode,
   updateProfile,
   reload,
   User,
+  type ActionCodeSettings,
 } from "firebase/auth";
 
 // storageBucket / messagingSenderId / appId are unused today (no Storage or
@@ -39,6 +41,28 @@ export function onAuthStateChanged(
   return _onAuthStateChanged(authObj, callback);
 }
 
+/**
+ * Where Firebase sends the user once they've clicked the verification link.
+ *
+ * This is the *continue* URL, not the handler — it does not move the link off
+ * Firebase's own hosted page. Until the Firebase console's custom action URL
+ * points at /auth/action, the link opens that hosted page and this is the
+ * destination it offers afterwards; /verify-email polls for the flag, so
+ * landing back there completes the flow without the user doing anything else.
+ * Once the console is pointed at /auth/action, the link lands in the app
+ * directly and this value becomes the post-apply redirect.
+ *
+ * The origin is read at call time rather than from a NEXT_PUBLIC_* var because
+ * those are inlined at build time (see lib/config.ts) — dev, UAT and prod
+ * would each need their own build just to get their own verification links.
+ * The domain must be listed under Authentication → Settings → Authorized
+ * domains in the Firebase console, or Firebase rejects the send.
+ */
+function verificationActionSettings(): ActionCodeSettings | undefined {
+  if (typeof window === "undefined") return undefined;
+  return { url: `${window.location.origin}/verify-email` };
+}
+
 export async function signInWithGoogle() {
   const result = await signInWithPopup(auth, googleProvider);
   return result;
@@ -64,7 +88,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
     // local user object to make the new name visible without a reload.
     await reload(result.user);
   }
-  await sendEmailVerification(result.user);
+  await sendEmailVerification(result.user, verificationActionSettings());
   return result;
 }
 
@@ -75,13 +99,36 @@ export async function signOut() {
 /** Send (or resend) a verification email to the currently signed-in user */
 export async function resendVerificationEmail() {
   if (!auth.currentUser) throw new Error("Not authenticated");
-  return sendEmailVerification(auth.currentUser);
+  return sendEmailVerification(auth.currentUser, verificationActionSettings());
 }
 
-/** Re-fetch the current user's record from Firebase so emailVerified reflects reality */
+/**
+ * Applies an out-of-band code from an email link (verification, recovery).
+ *
+ * Deliberately does not require a signed-in session: the link is usually
+ * opened by the mail client, which often isn't the browser that created the
+ * account, and the code is validated server-side by Firebase regardless.
+ */
+export async function applyEmailActionCode(oobCode: string) {
+  return applyActionCode(auth, oobCode);
+}
+
+/**
+ * Re-fetch the current user's record from Firebase so emailVerified reflects
+ * reality, and mint a fresh ID token once it does.
+ *
+ * The token refresh is the part that matters. reload() updates the local User
+ * object but leaves the cached ID token alone, and that token carries the
+ * email_verified claim the backend actually gates on — so without this, a user
+ * who just verified keeps getting 403s from /student/auth/bootstrap until the
+ * old token expires an hour later.
+ */
 export async function refreshUser(): Promise<User | null> {
   if (!auth.currentUser) return null;
   await reload(auth.currentUser);
+  if (auth.currentUser.emailVerified) {
+    await auth.currentUser.getIdToken(true);
+  }
   return auth.currentUser;
 }
 

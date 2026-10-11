@@ -1,13 +1,14 @@
 import { getIdToken } from "@/lib/firebase";
 import { API_BASE_URL } from "@/lib/config";
+import { splitName } from "@/lib/name";
 
 // All Student.Portal.API controllers are versioned (`api/v{version}/...`
 // alongside the unversioned `api/...` alias) — call through the v1 path
 // explicitly so this stays pinned as later versions are added.
 const API = `${API_BASE_URL}/api/v1`;
 
-async function authHeaders(): Promise<Record<string, string>> {
-  const token = await getIdToken();
+async function authHeaders(forceRefresh = false): Promise<Record<string, string>> {
+  const token = await getIdToken(forceRefresh);
   return {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
@@ -64,12 +65,42 @@ export interface StudentDto {
   wasCreated: boolean;
 }
 
+/**
+ * Builds the bootstrap payload from whatever Firebase already knows about the
+ * user.
+ *
+ * Sign-up sends the typed name, but that first bootstrap always 403s for an
+ * email/password account — the token can't be verified yet — so the call that
+ * actually creates the student record is the one after verification. Without
+ * this, that later call would post an empty payload and the name the user
+ * typed at sign-up would be lost.
+ */
+export function bootstrapPayloadFromUser(user: {
+  email: string | null;
+  displayName: string | null;
+}): BootstrapPayload {
+  const payload: BootstrapPayload = {};
+  if (user.email) payload.email = user.email;
+  const name = user.displayName?.trim().replace(/\s+/g, " ");
+  if (name) Object.assign(payload, splitName(name));
+  return payload;
+}
+
 export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): Promise<StudentDto> {
-  const res = await fetch(`${API}/student/auth/bootstrap`, {
-    method: "POST",
-    headers: await authHeaders(),
-    body: JSON.stringify(payload),
-  });
+  const body = JSON.stringify(payload);
+  const send = (forceRefresh = false) =>
+    authHeaders(forceRefresh).then((headers) =>
+      fetch(`${API}/student/auth/bootstrap`, { method: "POST", headers, body })
+    );
+
+  let res = await send();
+  if (res.status === 403) {
+    // 403 here means the ID token's email_verified claim was false. The user
+    // may well have verified since that token was minted — tokens live an hour
+    // and nothing invalidates them on verification — so mint a fresh one and
+    // ask again before believing it. Only a second 403 is a real answer.
+    res = await send(true);
+  }
   if (!res.ok) return throwApiError(res, `Bootstrap failed: ${res.status}`);
   return res.json();
 }

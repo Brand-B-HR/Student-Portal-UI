@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { auth, onAuthStateChanged, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail } from "@/lib/firebase";
 import { bootstrapStudentProfile, ApiError } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { splitName } from "@/lib/name";
 import { toast } from "react-toastify";
 
 // useSearchParams() needs a Suspense boundary around it, or the whole page
@@ -15,17 +16,6 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
-}
-
-/**
- * Splits a typed full name on the LAST space, so multi-word given names
- * ("Mary Anne Smith") keep the surname intact. A single word becomes the
- * first name with an empty last name.
- */
-function splitName(name: string): { firstName: string; lastName: string } {
-  const i = name.lastIndexOf(" ");
-  if (i === -1) return { firstName: name, lastName: "" };
-  return { firstName: name.slice(0, i), lastName: name.slice(i + 1) };
 }
 
 function LoginForm() {

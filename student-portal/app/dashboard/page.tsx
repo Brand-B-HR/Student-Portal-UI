@@ -5,27 +5,48 @@ import SiteShell from "@/components/SiteShell";
 import Container from "@/components/ui/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ArticleCard from "@/components/ArticleCard";
-import ArticleRail from "@/components/ArticleRail";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import AdBanner from "@/components/AdBanner";
 import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
-import { fetchArticles } from "@/lib/articles";
+import { fetchArticles, sortByRecency } from "@/lib/articles";
 import { useAsync } from "@/hooks/useAsync";
+
+/** How many cards the "Latest articles" grid shows. */
+const LATEST_COUNT = 3;
+
+/** Masthead shortcuts into the three things a student can actually do here. */
+const QUICK_LINKS = [
+  {
+    label: "Read all articles",
+    href: "/blog",
+    icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+  },
+  {
+    label: "Apply for job openings",
+    href: "/jobs",
+    icon: "M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M4 7h16v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7z",
+  },
+  {
+    label: "Get consultation",
+    href: "/our-team",
+    icon: "M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z",
+  },
+];
 
 export default function DashboardPage() {
   const { data, loading, error } = useAsync(
     (signal) => fetchArticles(1, 13, signal),
     []
   );
-  const articles = data?.articles ?? [];
+  // Sorted here rather than trusting the endpoint's row order, so "Latest
+  // articles" is actually the latest whatever the API hands back.
+  const articles = sortByRecency(data?.articles ?? []);
 
-  // Slot the feed into the page's sections. The carousel and "Latest
-  // articles" may overlap when there are only a few articles total —
-  // that's preferable to leaving either section empty.
+  // Slot the feed into the page's sections. "Latest articles" shows the three
+  // most recent in the system, so it deliberately repeats the carousel above
+  // it — change this to articles.slice(3, 6) if the two should never overlap.
   const featuredSlides = articles.slice(0, 3);
-  const rest = articles.length > featuredSlides.length ? articles.slice(featuredSlides.length) : articles;
-  const latest = rest.slice(0, 6);
-  const rail = rest.slice(6, 12);
+  const latest = articles.slice(0, LATEST_COUNT);
 
   return (
     <SiteShell>
@@ -43,31 +64,41 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* CV prompt */}
+            {/* Quick links into the features, in place of the old CV prompt —
+                there's no CV captured at sign-up, so prompting to "update"
+                one asked students to replace something they never uploaded. */}
             <div className="w-full max-w-sm flex-shrink-0 overflow-hidden rounded-[14px] border border-brand-200 bg-white p-5 lg:w-[320px]">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] bg-brand-500 text-white">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[2]">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <h3 className="font-serif text-[19px] font-semibold leading-snug text-ink-900">
-                  Keep your CV updated
-                </h3>
-              </div>
+              <h3 className="font-serif text-[19px] font-semibold leading-snug text-ink-900">
+                Start here
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-600">
-                Upload a new version any time to replace the CV on your profile.
+                Jump straight to what you came for.
               </p>
-              <Link
-                href="/upload"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
-              >
-                Update your CV
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-current stroke-[2.5]">
-                  <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
+
+              <ul className="mt-4 space-y-1">
+                {QUICK_LINKS.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="group flex items-center gap-3 rounded-[10px] px-2 py-2 text-sm font-medium text-ink-900 transition-colors hover:bg-brand-100"
+                    >
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-brand-500 text-white">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[2]">
+                          <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className="flex-1 text-left">{item.label}</span>
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                        className="h-3.5 w-3.5 flex-shrink-0 fill-none stroke-current stroke-[2.5] text-ink-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600"
+                      >
+                        <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </Container>
@@ -138,17 +169,6 @@ export default function DashboardPage() {
             {/* Small ad strip — contained, never full-bleed */}
             <AdBanner variant="strip" />
 
-            {/* Tinted rail band */}
-            {rail.length > 0 && (
-              <ArticleRail
-                title="More from the library"
-                subtitle="Deeper reads on interviews, salary, and growing your career."
-                articles={rail}
-                actionHref="/blog"
-                actionLabel="More"
-                tinted
-              />
-            )}
           </div>
         )}
       </Container>
