@@ -270,8 +270,9 @@ email, **409** → account conflict.
   environment with no config change.
 - **Don't write bespoke card markup.** Add a variant to `ArticleCard` instead, so every
   page benefits.
-- **Comments are not persisted.** `CommentSection` holds state locally and is seeded with
-  placeholder entries — see `SAMPLE_COMMENTS` in that file.
+- **Comments are not persisted.** `CommentSection` holds state locally, so anything posted
+  is lost on reload. There is no comments endpoint on the API yet; the thread starts empty
+  and the section carries a "Preview · not saved" badge until one exists.
 
 ---
 

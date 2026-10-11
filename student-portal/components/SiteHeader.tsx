@@ -7,15 +7,6 @@ import { auth, signOut, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
 import { initialsOf } from "@/lib/articles";
 
-/**
- * "Tools" and "Grow" have no pages behind them yet — the backend has no
- * resume-builder / coaching / community features today. They're shown as
- * disabled dropdown items labelled "Soon" so the nav matches the intended
- * information architecture without linking anywhere real.
- */
-const TOOLS_ITEMS = ["Resume Builder", "Salary Calculator", "Interview Simulator"];
-const GROW_ITEMS = ["Career Coaching", "Community", "Newsletter"];
-
 function Wordmark({ compact = false, href }: { compact?: boolean; href: string }) {
   return (
     <Link href={href} className="flex flex-shrink-0 items-center gap-2.5">
@@ -32,69 +23,6 @@ function Wordmark({ compact = false, href }: { compact?: boolean; href: string }
         CareerBuild
       </span> */}
     </Link>
-  );
-}
-
-/** "Tools" / "Grow" — a label with a caret that opens a list of stubbed, disabled items. */
-function StubDropdown({ label, items }: { label: string; items: string[] }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="flex items-center gap-1 py-5 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
-      >
-        {label}
-        <svg
-          viewBox="0 0 24 24"
-          className={`h-3.5 w-3.5 fill-none stroke-current stroke-[2.5] transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          role="menu"
-          className="animate-fade-in absolute left-0 top-[calc(100%+2px)] w-56 overflow-hidden rounded-[14px] border border-line bg-white p-1.5 shadow-[var(--shadow-pop)]"
-        >
-          {items.map((item) => (
-            <div
-              key={item}
-              role="menuitem"
-              aria-disabled
-              className="flex cursor-not-allowed items-center justify-between rounded-lg px-2.5 py-2 text-sm text-ink-400"
-            >
-              {item}
-              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">
-                Soon
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -157,12 +85,20 @@ export default function SiteHeader() {
 
   const homeHref = user ? "/dashboard" : "/";
   const displayName = user?.displayName ?? user?.email ?? "Student";
+
+  // The header shows this next to the avatar, where a full email address is
+  // too long and reads as noise. Email/password accounts have no displayName
+  // until the name typed at sign-up reaches the profile, so fall back to the
+  // local part of the address rather than showing nothing.
+  const headerName = user?.displayName?.trim() || user?.email?.split("@")[0] || "Student";
   const isActive = (href: string) =>
     href === "/" || href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
   const NAV = [
     { href: homeHref, label: "Home" },
-    { href: "/blog", label: "Learn" },
+    { href: "/blog", label: "Articles" },
+    { href: "/jobs", label: "Jobs" },
+    { href: "/our-team", label: "Our Team" },
   ];
 
   return (
@@ -208,30 +144,30 @@ export default function SiteHeader() {
                 </Link>
               );
             })}
-            <StubDropdown label="Tools" items={TOOLS_ITEMS} />
-            <StubDropdown label="Grow" items={GROW_ITEMS} />
           </nav>
 
           {/* Account */}
           <div className="ml-auto flex items-center gap-2 md:ml-0" ref={menuRef}>
             {!authChecked ? null : user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="hidden text-sm font-semibold text-ink-700 transition-colors hover:text-brand-700 sm:inline-flex"
-                >
-                  My Dashboard
-                </Link>
-
                 <div className="relative">
+                  {/* Name and avatar are one trigger — the name used to be a
+                      separate link to the dashboard, which made the two halves
+                      of the same control do different things. */}
                   <button
                     type="button"
                     onClick={() => setMenuOpen((v) => !v)}
                     aria-expanded={menuOpen}
                     aria-haspopup="menu"
                     aria-label="Account menu"
-                    className="ml-2 flex items-center gap-2 rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-brand-200"
+                    className="flex items-center gap-2 rounded-full p-0.5 pl-3 transition-shadow hover:ring-2 hover:ring-brand-200"
                   >
+                    <span
+                      title={headerName}
+                      className="hidden max-w-[180px] truncate text-sm font-semibold text-ink-700 sm:inline"
+                    >
+                      {headerName}
+                    </span>
                     {user?.photoURL ? (
                       <img
                         src={user.photoURL}
@@ -263,14 +199,7 @@ export default function SiteHeader() {
                           role="menuitem"
                           className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
                         >
-                          My CV &amp; Profile
-                        </Link>
-                        <Link
-                          href="/upload"
-                          role="menuitem"
-                          className="block rounded-lg px-2.5 py-2 text-sm text-ink-700 transition-colors hover:bg-surface-subtle"
-                        >
-                          Update CV
+                          My Profile
                         </Link>
                       </div>
 
@@ -349,39 +278,16 @@ export default function SiteHeader() {
                 );
               })}
 
-              {[
-                { label: "Tools", items: TOOLS_ITEMS },
-                { label: "Grow", items: GROW_ITEMS },
-              ].map((group) => (
-                <div key={group.label} className="mt-1 px-3.5 py-2">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-300">
-                    {group.label}
-                  </p>
-                  <div className="mt-1.5 space-y-0.5">
-                    {group.items.map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center justify-between rounded-lg py-1.5 text-sm text-ink-400"
-                      >
-                        {item}
-                        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">
-                          Soon
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
             </nav>
 
             <div className="border-t border-line p-3">
               {user ? (
                 <>
                   <Link
-                    href="/upload"
+                    href="/profile"
                     className="mb-2 flex items-center justify-center rounded-full bg-brand-500 px-4 py-2.5 text-sm font-bold text-white"
                   >
-                    Update CV
+                    My Profile
                   </Link>
                   <div className="flex items-center gap-2.5 px-1 py-2">
                     {user?.photoURL ? (

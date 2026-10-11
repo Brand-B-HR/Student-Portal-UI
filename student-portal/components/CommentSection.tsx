@@ -9,9 +9,10 @@ import { initialsOf } from "@/lib/articles";
  * Article comments — FRONT END ONLY.
  *
  * Nothing here talks to an API: comments live in component state and are lost on
- * reload. When the backend lands, replace SAMPLE_COMMENTS with a fetch and make
- * handleSubmit POST, then delete this notice. The shapes below are deliberately
- * close to what a comments API would return so that swap stays small.
+ * reload. When the backend lands, load the thread for `articleId` into the
+ * `comments` state and make handleSubmit POST, then delete this notice and the
+ * "Preview · not saved" badge. The Comment shape below is deliberately close to
+ * what a comments API would return so that swap stays small.
  */
 
 export interface Comment {
@@ -23,24 +24,6 @@ export interface Comment {
   likes: number;
   likedByMe?: boolean;
 }
-
-/** Placeholder content so the UI reads properly. Remove when the API is wired up. */
-const SAMPLE_COMMENTS: Comment[] = [
-  {
-    id: "s1",
-    authorName: "Nethmi Perera",
-    body: "The bit about recruiters carrying 30–40 open roles explains so much. I always assumed silence meant I'd been rejected outright.",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    likes: 12,
-  },
-  {
-    id: "s2",
-    authorName: "Dinuka Fernando",
-    body: "Would love a follow-up on how long to wait before sending a polite nudge.",
-    createdAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-    likes: 4,
-  },
-];
 
 function timeAgo(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -96,7 +79,7 @@ const MAX_LENGTH = 1000;
 
 export default function CommentSection({ articleId }: { articleId: string }) {
   const [user, setUser] = useState<User | null>(null);
-  const [comments, setComments] = useState<Comment[]>(SAMPLE_COMMENTS);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
