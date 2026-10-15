@@ -72,6 +72,25 @@ export function Meta({ article, className = "" }: { article: Article; className?
       <span>{formatDate(article.publishedAt ?? article.createdAt)}</span>
       <span aria-hidden>·</span>
       <span>{readTime(article.contentHtml)}</span>
+      {/* Counts only — the card is wrapped in a Link, so a button here would be
+          invalid nesting. Liking and saving happen on the article itself.
+          Hidden at zero so a quiet article doesn't advertise it. */}
+      {article.likeCount > 0 && (
+        <>
+          <span aria-hidden>·</span>
+          <span>
+            {article.likeCount} {article.likeCount === 1 ? "like" : "likes"}
+          </span>
+        </>
+      )}
+      {article.commentCount > 0 && (
+        <>
+          <span aria-hidden>·</span>
+          <span>
+            {article.commentCount} {article.commentCount === 1 ? "comment" : "comments"}
+          </span>
+        </>
+      )}
     </div>
   );
 }

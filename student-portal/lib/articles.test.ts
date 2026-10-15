@@ -2,7 +2,18 @@ import { describe, expect, it } from "vitest";
 import { sortByRecency, type Article } from "./articles";
 
 function article(id: string, dates: { publishedAt?: string; createdAt: string }): Article {
-  return { id, title: id, contentHtml: "", ...dates };
+  // Engagement counts are irrelevant to ordering; zeroed so the cases below
+  // read as being only about dates.
+  return {
+    id,
+    title: id,
+    contentHtml: "",
+    likeCount: 0,
+    commentCount: 0,
+    likedByMe: false,
+    savedByMe: false,
+    ...dates,
+  };
 }
 
 describe("sortByRecency", () => {

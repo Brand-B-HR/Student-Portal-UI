@@ -270,9 +270,13 @@ email, **409** → account conflict.
   environment with no config change.
 - **Don't write bespoke card markup.** Add a variant to `ArticleCard` instead, so every
   page benefits.
-- **Comments are not persisted.** `CommentSection` holds state locally, so anything posted
-  is lost on reload. There is no comments endpoint on the API yet; the thread starts empty
-  and the section carries a "Preview · not saved" badge until one exists.
+- **Comments are persisted, comment *likes* are not.** `CommentSection` reads and writes
+  through the API. The per-comment like control is deliberately absent: the API hardcodes
+  `likes` / `likedByMe` until phase 3. The fields stay on the `Comment` type so landing that
+  is a render change, not a model change.
+- **Article actions live on the reader, not on cards.** `ArticleCard` wraps its whole body in
+  a `<Link>`, so a button inside it would be invalid nesting — cards show read-only counts and
+  `ArticleActions` goes on the article page.
 
 ---
 

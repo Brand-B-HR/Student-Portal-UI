@@ -99,6 +99,7 @@ export default function SiteHeader() {
     { href: "/blog", label: "Articles" },
     { href: "/jobs", label: "Jobs" },
     { href: "/our-team", label: "Our Team" },
+    ...(user ? [{ href: "/saved", label: "Saved Items" }] : []),
   ];
 
   return (

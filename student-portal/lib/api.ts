@@ -1,26 +1,25 @@
-import { getIdToken } from "@/lib/firebase";
 import { API_BASE_URL } from "@/lib/config";
 import { splitName } from "@/lib/name";
+import { authHeaders } from "@/lib/http";
+import type { Article, ArticleListResponse } from "@/lib/articles";
 
 // All Student.Portal.API controllers are versioned (`api/v{version}/...`
 // alongside the unversioned `api/...` alias) — call through the v1 path
 // explicitly so this stays pinned as later versions are added.
 const API = `${API_BASE_URL}/api/v1`;
 
-async function authHeaders(forceRefresh = false): Promise<Record<string, string>> {
-  const token = await getIdToken(forceRefresh);
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-}
-
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /**
+   * Seconds to wait before retrying, read from the Retry-After header. Only
+   * set on 429s — comment posting is capped at 10/min per student.
+   */
+  retryAfterSeconds?: number;
+  constructor(status: number, message: string, retryAfterSeconds?: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -37,7 +36,12 @@ async function throwApiError(res: Response, fallback: string): Promise<never> {
   } catch {
     // response had no JSON body
   }
-  throw new ApiError(res.status, message);
+  const retryAfter = Number(res.headers.get("Retry-After"));
+  throw new ApiError(
+    res.status,
+    message,
+    Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined
+  );
 }
 
 
@@ -105,6 +109,150 @@ export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): P
   return res.json();
 }
 
+
+/* ─── Article actions ────────────────────────────────────────────── */
+
+/**
+ * Likes, saves and comments. All of these require a signed-in, verified
+ * student, so the caller is expected to send guests to /login before calling
+ * rather than waiting for the 401.
+ *
+ * Status contract, confirmed with the API team:
+ *   401 → no or invalid token          (client: send to /login)
+ *   403 → signed in, email unverified  (client: send to /verify-email)
+ *   404 → unknown article/comment, or another student's comment
+ *   429 → comment rate limit, 10/min per student, carries Retry-After
+ * These two must never be collapsed: AuthGuard already treats 403 as
+ * "unverified" and routes there.
+ */
+
+export interface LikeResult {
+  liked: boolean;
+  likeCount: number;
+}
+
+export interface SaveResult {
+  saved: boolean;
+}
+
+export interface Comment {
+  id: string;
+  authorName: string;
+  authorPhotoUrl?: string;
+  /** ISO 8601, UTC. The UI renders relative time from this itself. */
+  createdAt: string;
+  body: string;
+  /**
+   * Hardcoded to 0/false server-side today — comment likes are phase 3 and
+   * have no endpoint yet. Kept on the type so landing them later is a render
+   * change rather than a model change.
+   */
+  likes: number;
+  likedByMe: boolean;
+  /**
+   * Whether the caller wrote this comment, computed server-side. Drives
+   * whether the delete control shows. Only presentation — delete fails closed
+   * with a 404 for anyone else regardless.
+   */
+  isMine: boolean;
+}
+
+export interface CommentListResponse {
+  comments: Comment[];
+  total: number;
+}
+
+/** Server rejects anything longer, measured after trimming. */
+export const COMMENT_MAX_LENGTH = 1000;
+
+async function studentRequest(
+  path: string,
+  options: { method?: string; body?: unknown; signal?: AbortSignal } = {}
+): Promise<Response> {
+  return fetch(`${API}${path}`, {
+    method: options.method ?? "GET",
+    headers: await authHeaders(),
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    signal: options.signal,
+  });
+}
+
+/**
+ * Likes and saves are idempotent toggles — liking twice succeeds and returns
+ * the current state rather than 409ing, so an optimistic UI that double-fires
+ * won't produce a spurious error.
+ */
+async function toggle<T>(path: string, method: "POST" | "DELETE", fallback: string): Promise<T> {
+  const res = await studentRequest(path, { method });
+  if (!res.ok) return throwApiError(res, fallback);
+  return res.json();
+}
+
+export function likeArticle(articleId: string): Promise<LikeResult> {
+  return toggle(`/student/articles/${articleId}/like`, "POST", "Couldn't like this article.");
+}
+
+export function unlikeArticle(articleId: string): Promise<LikeResult> {
+  return toggle(`/student/articles/${articleId}/like`, "DELETE", "Couldn't remove your like.");
+}
+
+export function saveArticle(articleId: string): Promise<SaveResult> {
+  return toggle(`/student/articles/${articleId}/save`, "POST", "Couldn't save this article.");
+}
+
+export function unsaveArticle(articleId: string): Promise<SaveResult> {
+  return toggle(`/student/articles/${articleId}/save`, "DELETE", "Couldn't remove this from your saved list.");
+}
+
+/** Returns the same envelope as the public article list, so cards reuse it as-is. */
+export async function fetchSavedArticles(
+  page = 1,
+  pageSize = 24,
+  signal?: AbortSignal
+): Promise<ArticleListResponse> {
+  const res = await studentRequest(`/student/articles/saved?page=${page}&pageSize=${pageSize}`, {
+    signal,
+  });
+  if (!res.ok) return throwApiError(res, "Couldn't load your saved articles.");
+  const data = await res.json();
+  return { articles: (data.articles ?? []) as Article[], total: data.total ?? 0 };
+}
+
+export async function fetchComments(
+  articleId: string,
+  page = 1,
+  pageSize = 20,
+  signal?: AbortSignal
+): Promise<CommentListResponse> {
+  const res = await studentRequest(
+    `/student/articles/${articleId}/comments?page=${page}&pageSize=${pageSize}`,
+    { signal }
+  );
+  if (!res.ok) return throwApiError(res, "Couldn't load comments.");
+  const data = await res.json();
+  return { comments: (data.comments ?? []) as Comment[], total: data.total ?? 0 };
+}
+
+/** Returns the created comment in full, so the caller can prepend without refetching. */
+export async function postComment(articleId: string, body: string): Promise<Comment> {
+  const res = await studentRequest(`/student/articles/${articleId}/comments`, {
+    method: "POST",
+    body: { body },
+  });
+  if (!res.ok) return throwApiError(res, "Couldn't post your comment.");
+  return res.json();
+}
+
+/**
+ * Deletes one of the caller's own comments. Anyone else's — and an unknown or
+ * already-deleted id — comes back 404 rather than 403, so this deliberately
+ * can't be used to probe which comments exist.
+ */
+export async function deleteComment(commentId: string): Promise<void> {
+  const res = await studentRequest(`/student/comments/${commentId}`, { method: "DELETE" });
+  // 204 on success, so there is no body to parse.
+  if (!res.ok) return throwApiError(res, "Couldn't delete your comment.");
+}
 
 export interface CvUploadUrlResponse {
   uploadUrl: string;

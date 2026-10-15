@@ -2,6 +2,7 @@
 
 import DOMPurify from "isomorphic-dompurify";
 import { API_BASE_URL } from "@/lib/config";
+import { optionalAuthHeaders } from "@/lib/http";
 
 // BlogController is versioned (`api/v{version}/...` alongside the unversioned
 // `api/...` alias) — call through v1 explicitly.
@@ -16,6 +17,16 @@ export interface Article {
   authorName?: string;
   createdAt: string;
   publishedAt?: string;
+  /** Totals, public — present for anonymous callers too. */
+  likeCount: number;
+  commentCount: number;
+  /**
+   * The caller's own state. Both come back false for an anonymous request, so
+   * the fetches below send a token whenever there is one — see
+   * optionalAuthHeaders.
+   */
+  likedByMe: boolean;
+  savedByMe: boolean;
 }
 
 export interface ArticleListResponse {
@@ -125,17 +136,20 @@ export async function fetchArticles(
   pageSize = 9,
   signal?: AbortSignal
 ): Promise<ArticleListResponse> {
-  const res = await fetch(
-    `${API}/blog/articles?page=${page}&pageSize=${pageSize}`,
-    { signal }
-  );
+  const res = await fetch(`${API}/blog/articles?page=${page}&pageSize=${pageSize}`, {
+    signal,
+    headers: await optionalAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to load articles");
   const data = await res.json();
   return { articles: data.articles ?? [], total: data.total ?? 0 };
 }
 
 export async function fetchArticle(id: string, signal?: AbortSignal): Promise<Article> {
-  const res = await fetch(`${API}/blog/articles/${id}`, { signal });
+  const res = await fetch(`${API}/blog/articles/${id}`, {
+    signal,
+    headers: await optionalAuthHeaders(),
+  });
   if (res.status === 404) throw new Error("not_found");
   if (!res.ok) throw new Error("failed");
   return res.json();

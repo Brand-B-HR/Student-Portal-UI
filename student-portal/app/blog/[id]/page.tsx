@@ -8,6 +8,7 @@ import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
 import CommentSection from "@/components/CommentSection";
+import ArticleActions from "@/components/ArticleActions";
 import { Spinner, EmptyState, ErrorState } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import {
@@ -186,8 +187,11 @@ export default function BlogArticlePage() {
               </div>
             )}
 
+            {/* Actions — shown to everyone; a guest who taps one is sent to sign in */}
+            <ArticleActions article={article} className="mt-12" />
+
             {/* Foot */}
-            <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
               <Link
                 href="/blog"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-600"
@@ -200,7 +204,7 @@ export default function BlogArticlePage() {
               <p className="text-xs text-ink-400">Published {published}</p>
             </div>
 
-            {/* Comments — front-end only for now, and only worth showing to readers who saw the article */}
+            {/* Comments are signed-in only, both here and at the API */}
             {signedIn && <CommentSection key={article.id} articleId={article.id} />}
 
             <AdBanner variant="strip" className="mt-12" />
