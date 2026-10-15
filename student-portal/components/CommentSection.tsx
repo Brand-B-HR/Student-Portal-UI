@@ -242,9 +242,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
       </form>
 
       {/* Thread */}
-      {loading ? (
-        <p className="mt-10 text-center text-sm text-ink-400">Loading comments…</p>
-      ) : error && sorted.length === 0 ? (
+      {loading ? null : error && sorted.length === 0 ? (
         <p className="mt-10 rounded-[12px] border border-dashed border-line-strong px-6 py-10 text-center text-sm text-ink-400">
           We couldn&rsquo;t load the comments. Refresh the page to try again.
         </p>

@@ -126,24 +126,6 @@
 }
 
 @layer components {
-  .loading-screen {
-    display: flex;
-    min-height: 100vh;
-    align-items: center;
-    justify-content: center;
-    background-color: #fffaf3;
-    padding: 1.5rem;
-  }
-
-  .spinner {
-    height: 2.5rem;
-    width: 2.5rem;
-    border-radius: 9999px;
-    border: 3px solid #fdf2e1;
-    border-top-color: #ef9f26;
-    animation: spin 0.9s linear infinite;
-  }
-
   /* Horizontal rails — hide the scrollbar, keep the scroll. */
   .rail-scroll {
     scrollbar-width: none;

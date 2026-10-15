@@ -5,7 +5,7 @@ import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
 import Badge from "@/components/ui/Badge";
-import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { fetchArticles } from "@/lib/articles";
 import { categoryOf, isPremium } from "@/lib/categories";
 import { useAsync } from "@/hooks/useAsync";
@@ -39,13 +39,7 @@ export default function BlogPage() {
               message="Could not load articles. Please try again later."
               onRetry={() => window.location.reload()}
             />
-          ) : loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <ArticleCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : articles.length === 0 ? (
+          ) : loading ? null : articles.length === 0 ? (
             <EmptyState
               icon={
                 <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">

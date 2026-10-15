@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import SiteShell from "@/components/SiteShell";
 import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
-import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { ApiError, fetchSavedArticles, unsaveArticle } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { useAsync } from "@/hooks/useAsync";
@@ -70,13 +70,7 @@ export default function SavedArticlesPage() {
             message="We couldn't load your saved articles. Please try again in a moment."
             onRetry={() => window.location.reload()}
           />
-        ) : loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <ArticleCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : articles.length === 0 ? (
+        ) : loading ? null : articles.length === 0 ? (
           <EmptyState
             icon={
               <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">

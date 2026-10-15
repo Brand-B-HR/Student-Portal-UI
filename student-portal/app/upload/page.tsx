@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
+import { Spinner } from "@/components/LoadingOverlay";
 import { useRouter } from "next/navigation";
 import {
   getCvUploadUrl,
@@ -537,9 +538,11 @@ export default function UploadPage() {
             {parsing ? (
               /* CV Extraction Loading Screen */
               <div className="flex-1 flex flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-sm">
+                {/* Uses the shared Spinner rather than the global overlay:
+                    extraction polls for up to a minute, and blocking the page
+                    for that long would be unusable. */}
                 <div className="relative flex h-20 w-20 items-center justify-center">
-                  <div className="absolute h-full w-full rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
-                  <div className="absolute h-12 w-12 rounded-full border-4 border-orange-50 border-t-orange-300 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }} />
+                  <Spinner className="absolute h-full w-full border-4" />
                   <span className="text-2xl">📄</span>
                 </div>
                 <h2 className="mt-6 text-lg font-bold text-forest-900">Extracting CV</h2>

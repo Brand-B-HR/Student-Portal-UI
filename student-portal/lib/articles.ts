@@ -3,6 +3,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { API_BASE_URL } from "@/lib/config";
 import { optionalAuthHeaders } from "@/lib/http";
+import { tracked } from "@/lib/loading";
 
 // BlogController is versioned (`api/v{version}/...` alongside the unversioned
 // `api/...` alias) — call through v1 explicitly.
@@ -136,20 +137,21 @@ export async function fetchArticles(
   pageSize = 9,
   signal?: AbortSignal
 ): Promise<ArticleListResponse> {
-  const res = await fetch(`${API}/blog/articles?page=${page}&pageSize=${pageSize}`, {
-    signal,
-    headers: await optionalAuthHeaders(),
-  });
+  const res = await tracked(async () =>
+    fetch(`${API}/blog/articles?page=${page}&pageSize=${pageSize}`, {
+      signal,
+      headers: await optionalAuthHeaders(),
+    })
+  );
   if (!res.ok) throw new Error("Failed to load articles");
   const data = await res.json();
   return { articles: data.articles ?? [], total: data.total ?? 0 };
 }
 
 export async function fetchArticle(id: string, signal?: AbortSignal): Promise<Article> {
-  const res = await fetch(`${API}/blog/articles/${id}`, {
-    signal,
-    headers: await optionalAuthHeaders(),
-  });
+  const res = await tracked(async () =>
+    fetch(`${API}/blog/articles/${id}`, { signal, headers: await optionalAuthHeaders() })
+  );
   if (res.status === 404) throw new Error("not_found");
   if (!res.ok) throw new Error("failed");
   return res.json();

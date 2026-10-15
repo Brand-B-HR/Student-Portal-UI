@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import SiteShell from "@/components/SiteShell";
 import Container from "@/components/ui/Container";
-import { Skeleton } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import type { User } from "@/lib/firebase";
 import { initialsOf } from "@/lib/articles";
@@ -49,13 +48,7 @@ export default function ProfilePage() {
 
       <Container className="py-10 sm:py-12">
         <div className="max-w-xl rounded-[14px] border border-line bg-white p-6 sm:p-7">
-          {!ready ? (
-            <div className="space-y-4">
-              <Skeleton className="h-14 w-14 rounded-full" />
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-4 w-56" />
-            </div>
-          ) : (
+          {!ready ? null : (
             <>
               <div className="flex items-center gap-4">
                 {user?.photoURL ? (

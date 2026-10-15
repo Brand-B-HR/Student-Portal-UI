@@ -7,7 +7,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ArticleCard from "@/components/ArticleCard";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import AdBanner from "@/components/AdBanner";
-import { ArticleCardSkeleton, EmptyState, ErrorState } from "@/components/ui/States";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { fetchArticles, sortByRecency } from "@/lib/articles";
 import { useAsync } from "@/hooks/useAsync";
 
@@ -110,19 +110,7 @@ export default function DashboardPage() {
             message="We couldn't load articles right now. Please try again in a moment."
             onRetry={() => window.location.reload()}
           />
-        ) : loading ? (
-          <div className="space-y-10">
-            <div className="grid gap-6 md:grid-cols-2">
-              <ArticleCardSkeleton />
-              <ArticleCardSkeleton />
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <ArticleCardSkeleton key={i} />
-              ))}
-            </div>
-          </div>
-        ) : articles.length === 0 ? (
+        ) : loading ? null : articles.length === 0 ? (
           <EmptyState
             icon={
               <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-[1.5]">

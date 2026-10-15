@@ -1,38 +1,7 @@
 import type { ReactNode } from "react";
 
-/** Shimmer block used to hold layout while content loads. */
-export function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-gradient-to-r from-brand-100 via-surface-muted to-brand-100 ${className}`}
-    />
-  );
-}
-
-export function ArticleCardSkeleton() {
-  return (
-    <div className="overflow-hidden rounded-[14px] border border-line bg-white">
-      <Skeleton className="h-40 w-full rounded-none" />
-      <div className="space-y-2.5 p-4">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    </div>
-  );
-}
-
-export function Spinner({ label }: { label?: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 py-20 text-ink-400">
-      <svg className="h-6 w-6 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5z" />
-      </svg>
-      {label && <span className="text-sm">{label}</span>}
-    </div>
-  );
-}
+/* Loading is handled globally by LoadingOverlay, driven by lib/loading.ts —
+   there are deliberately no per-page spinners or skeletons here. */
 
 export function EmptyState({
   icon,

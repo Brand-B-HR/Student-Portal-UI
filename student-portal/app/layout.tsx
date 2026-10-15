@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 export const metadata: Metadata = {
   title: {
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-scroll-behavior="smooth">
       <body className="bg-surface-subtle text-ink-900 antialiased" suppressHydrationWarning>
         {children}
+        <LoadingOverlay />
         <ToastContainer
           position="top-right"
           autoClose={4000}

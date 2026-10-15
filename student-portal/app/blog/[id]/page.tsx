@@ -9,7 +9,7 @@ import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
 import CommentSection from "@/components/CommentSection";
 import ArticleActions from "@/components/ArticleActions";
-import { Spinner, EmptyState, ErrorState } from "@/components/ui/States";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import {
   fetchArticle,
@@ -77,8 +77,6 @@ export default function BlogArticlePage() {
           </svg>
           All articles
         </Link>
-
-        {showLoading && <Spinner label="Loading article…" />}
 
         {!showLoading && error === "not_found" && (
           <div className="py-12">

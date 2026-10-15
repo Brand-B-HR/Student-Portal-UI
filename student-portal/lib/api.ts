@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/lib/config";
 import { splitName } from "@/lib/name";
 import { authHeaders } from "@/lib/http";
+import { tracked } from "@/lib/loading";
 import type { Article, ArticleListResponse } from "@/lib/articles";
 
 // All Student.Portal.API controllers are versioned (`api/v{version}/...`
@@ -90,11 +91,18 @@ export function bootstrapPayloadFromUser(user: {
   return payload;
 }
 
-export async function bootstrapStudentProfile(payload: BootstrapPayload = {}): Promise<StudentDto> {
+export async function bootstrapStudentProfile(
+  payload: BootstrapPayload = {},
+  opts: { silent?: boolean } = {}
+): Promise<StudentDto> {
   const body = JSON.stringify(payload);
   const send = (forceRefresh = false) =>
-    authHeaders(forceRefresh).then((headers) =>
-      fetch(`${API}/student/auth/bootstrap`, { method: "POST", headers, body })
+    tracked(
+      () =>
+        authHeaders(forceRefresh).then((headers) =>
+          fetch(`${API}/student/auth/bootstrap`, { method: "POST", headers, body })
+        ),
+      opts.silent
     );
 
   let res = await send();
@@ -167,14 +175,24 @@ export const COMMENT_MAX_LENGTH = 1000;
 
 async function studentRequest(
   path: string,
-  options: { method?: string; body?: unknown; signal?: AbortSignal } = {}
+  options: {
+    method?: string;
+    body?: unknown;
+    signal?: AbortSignal;
+    /** Skip the global overlay — for calls with their own feedback. */
+    silent?: boolean;
+  } = {}
 ): Promise<Response> {
-  return fetch(`${API}${path}`, {
-    method: options.method ?? "GET",
-    headers: await authHeaders(),
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    signal: options.signal,
-  });
+  return tracked(
+    async () =>
+      fetch(`${API}${path}`, {
+        method: options.method ?? "GET",
+        headers: await authHeaders(),
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        signal: options.signal,
+      }),
+    options.silent
+  );
 }
 
 /**
@@ -183,7 +201,7 @@ async function studentRequest(
  * won't produce a spurious error.
  */
 async function toggle<T>(path: string, method: "POST" | "DELETE", fallback: string): Promise<T> {
-  const res = await studentRequest(path, { method });
+  const res = await studentRequest(path, { method, silent: true });
   if (!res.ok) return throwApiError(res, fallback);
   return res.json();
 }
@@ -238,6 +256,7 @@ export async function postComment(articleId: string, body: string): Promise<Comm
   const res = await studentRequest(`/student/articles/${articleId}/comments`, {
     method: "POST",
     body: { body },
+    silent: true, // the Post button shows its own "Posting…" state
   });
   if (!res.ok) return throwApiError(res, "Couldn't post your comment.");
   return res.json();
@@ -249,7 +268,7 @@ export async function postComment(articleId: string, body: string): Promise<Comm
  * can't be used to probe which comments exist.
  */
 export async function deleteComment(commentId: string): Promise<void> {
-  const res = await studentRequest(`/student/comments/${commentId}`, { method: "DELETE" });
+  const res = await studentRequest(`/student/comments/${commentId}`, { method: "DELETE", silent: true });
   // 204 on success, so there is no body to parse.
   if (!res.ok) return throwApiError(res, "Couldn't delete your comment.");
 }
@@ -328,11 +347,11 @@ export async function getCvUploadUrl(
   mimeType: string,
   fileSize: number
 ): Promise<CvUploadUrlResponse> {
-  const res = await fetch(`${API}/student/cv/upload-url`, {
+  const res = await tracked(async () => fetch(`${API}/student/cv/upload-url`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, mimeType, fileSize }),
-  });
+  }));
   if (!res.ok) {
     const err = await res.text();
     throw new Error(err || `Failed to get CV upload URL: ${res.status}`);
@@ -356,11 +375,11 @@ export async function confirmCvUpload(
   fileSize: number,
   mimeType: string
 ): Promise<CvConfirmResponse> {
-  const res = await fetch(`${API}/student/cv/confirm`, {
+  const res = await tracked(async () => fetch(`${API}/student/cv/confirm`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, storageKey, fileSize, mimeType }),
-  });
+  }));
   if (!res.ok) throw new Error(`CV confirm failed: ${res.status}`);
   return res.json();
 }
@@ -374,18 +393,21 @@ export interface SaveProfilePayload {
 }
 
 export async function saveProfile(payload: SaveProfilePayload): Promise<void> {
-  const res = await fetch(`${API}/student/cv/save-profile`, {
+  const res = await tracked(async () => fetch(`${API}/student/cv/save-profile`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(payload),
-  });
+  }));
   if (!res.ok) throw new Error(`Save profile failed: ${res.status}`);
 }
 
-export async function getActiveCv(): Promise<{ cv: CvRecord; downloadUrl: string } | null> {
-  const res = await fetch(`${API}/student/cv/active`, {
-    headers: await authHeaders(),
-  });
+export async function getActiveCv(
+  opts: { silent?: boolean } = {}
+): Promise<{ cv: CvRecord; downloadUrl: string } | null> {
+  const res = await tracked(
+    async () => fetch(`${API}/student/cv/active`, { headers: await authHeaders() }),
+    opts.silent
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getActiveCv failed: ${res.status}`);
   return res.json();
@@ -405,7 +427,7 @@ export async function pollCvExtraction(
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    const result = await getActiveCv();
+    const result = await getActiveCv({ silent: true });
     if (result && result.cv.extractionStatus !== "processing") {
       return result.cv;
     }
@@ -427,11 +449,11 @@ export async function getVideoUploadUrl(
   mimeType: string,
   fileSize: number
 ): Promise<VideoUploadUrlResponse> {
-  const res = await fetch(`${API}/student/video/upload-url`, {
+  const res = await tracked(async () => fetch(`${API}/student/video/upload-url`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, mimeType, fileSize }),
-  });
+  }));
   if (!res.ok) {
     const err = await res.text();
     throw new Error(err || `Failed to get video upload URL: ${res.status}`);
@@ -445,18 +467,18 @@ export async function confirmVideoUpload(
   fileSize: number,
   mimeType: string
 ): Promise<void> {
-  const res = await fetch(`${API}/student/video/confirm`, {
+  const res = await tracked(async () => fetch(`${API}/student/video/confirm`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ fileName, storageKey, fileSize, mimeType }),
-  });
+  }));
   if (!res.ok) throw new Error(`Video confirm failed: ${res.status}`);
 }
 
 export async function getActiveVideo(): Promise<{ video: unknown; downloadUrl: string } | null> {
-  const res = await fetch(`${API}/student/video/active`, {
+  const res = await tracked(async () => fetch(`${API}/student/video/active`, {
     headers: await authHeaders(),
-  });
+  }));
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getActiveVideo failed: ${res.status}`);
   return res.json();

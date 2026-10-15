@@ -8,7 +8,7 @@ import PublicShell from "@/components/PublicShell";
 import Container from "@/components/ui/Container";
 import ArticleCard from "@/components/ArticleCard";
 import AdBanner from "@/components/AdBanner";
-import { Spinner, ErrorState } from "@/components/ui/States";
+import { ErrorState } from "@/components/ui/States";
 import { auth, onAuthStateChanged } from "@/lib/firebase";
 import { fetchArticles, authorOf, formatDate, readTime } from "@/lib/articles";
 import { useAsync } from "@/hooks/useAsync";
@@ -51,11 +51,8 @@ export default function HomePage() {
   const lockedArticles = articles.slice(5, 9);
 
   if (!authChecked || signedIn) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-subtle">
-        <Spinner />
-      </div>
-    );
+    // Nothing worth showing until auth resolves; the global overlay covers it.
+    return null;
   }
 
   return (
@@ -143,11 +140,7 @@ export default function HomePage() {
             message="Could not load articles right now. Please try again later."
             onRetry={() => window.location.reload()}
           />
-        ) : loading ? (
-          <div className="py-20">
-            <Spinner label="Loading articles…" />
-          </div>
-        ) : (
+        ) : loading ? null : (
           <div className="grid gap-10 lg:grid-cols-[1fr_300px]">
             {/* ── Main column: open teasers + locked list ──────────── */}
             <div>
