@@ -22,10 +22,7 @@ import {
   type CvEducationFields as Education,
 } from "@/lib/cvMapping";
 import { errorMessage as toErrorMessage } from "@/lib/errors";
-
-// Shared with the video-file check below, and with the "up to 20MB" copy
-// in the dropzone hints — keep those hints in sync if this changes.
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+import { checkCvFile, checkVideoFile } from "@/lib/uploads";
 
 interface ProfileData {
   student: {
@@ -112,13 +109,9 @@ export default function UploadPage() {
   function handlePdfFile(selectedFile: File | null) {
     if (!selectedFile) return;
 
-    if (selectedFile.type !== "application/pdf") {
-      setErrorMessage("Please upload a valid PDF CV document.");
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
-      setErrorMessage("File must be 20 MB or smaller.");
+    const problem = checkCvFile(selectedFile);
+    if (problem) {
+      setErrorMessage(problem);
       return;
     }
 
@@ -137,13 +130,9 @@ export default function UploadPage() {
   function handleVideoFile(selectedFile: File | null) {
     if (!selectedFile) return;
 
-    if (!selectedFile.type.startsWith("video/")) {
-      setErrorMessage("Please upload a valid Video file.");
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
-      setErrorMessage("File must be 20 MB or smaller.");
+    const problem = checkVideoFile(selectedFile);
+    if (problem) {
+      setErrorMessage(problem);
       return;
     }
 

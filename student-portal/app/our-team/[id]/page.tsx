@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import SiteShell from "@/components/SiteShell";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
+import MaterialUpload from "@/components/MaterialUpload";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { ApiError } from "@/lib/api";
 import { fetchConsultant } from "@/lib/consultants";
@@ -115,8 +116,11 @@ export default function BookConsultantPage() {
             description="Please choose another member of the team."
             action={<Button href="/our-team">Back to the team</Button>}
           />
+        ) : blocked?.reason === "no_cv" ? (
+          // Upload here and carry straight on to the times, no trip to /upload
+          <MaterialUpload onUploaded={() => setVersion((v) => v + 1)} />
         ) : blocked ? (
-          <BlockedNotice reason={blocked.reason} consultationId={blocked.activeConsultationId} />
+          <ActiveBookingNotice consultationId={blocked.activeConsultationId} />
         ) : slots.loading || eligibility.loading ? null : days.length === 0 ? (
           <EmptyState
             title="No times available"
@@ -236,28 +240,12 @@ export default function BookConsultantPage() {
   );
 }
 
-function BlockedNotice({
-  reason,
-  consultationId,
-}: {
-  reason?: "no_cv" | "active_booking" | null;
-  consultationId?: number | null;
-}) {
-  if (reason === "active_booking") {
-    return (
-      <EmptyState
-        title="You already have a session booked"
-        description="Finish or cancel your upcoming consultation before booking another."
-        action={<Button href={consultationId ? `/consultations#c-${consultationId}` : "/consultations"}>View my sessions</Button>}
-      />
-    );
-  }
-
+function ActiveBookingNotice({ consultationId }: { consultationId?: number | null }) {
   return (
     <EmptyState
-      title="Upload your CV first"
-      description="Your consultant needs your CV or an intro video to prepare for the session."
-      action={<Button href="/upload">Upload CV</Button>}
+      title="You already have a session booked"
+      description="Finish or cancel your upcoming consultation before booking another."
+      action={<Button href={consultationId ? `/consultations#c-${consultationId}` : "/consultations"}>View my sessions</Button>}
     />
   );
 }
