@@ -47,14 +47,8 @@ function Avatar({ consultant }: { consultant: Consultant }) {
   );
 }
 
-/**
- * One consultant in the team directory.
- *
- * `bookingHref` is optional on purpose: the slot picker it points at doesn't
- * exist yet, and a card that links to a 404 is worse than one that doesn't
- * link at all. Pass it once /our-team/[id] lands and the CTA appears for
- * everyone still taking bookings.
- */
+// bookingHref is optional: without it the card shows a plain availability badge
+/** One consultant in the team directory. */
 export default function ConsultantCard({
   consultant,
   bookingHref,

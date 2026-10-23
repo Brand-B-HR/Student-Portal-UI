@@ -24,7 +24,7 @@ export class ApiError extends Error {
   }
 }
 
-async function throwApiError(res: Response, fallback: string): Promise<never> {
+export async function throwApiError(res: Response, fallback: string): Promise<never> {
   let message = fallback;
   try {
     const body = await res.json();

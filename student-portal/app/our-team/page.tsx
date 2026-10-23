@@ -59,7 +59,7 @@ export default function OurTeamPage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {consultants.map((c) => (
-              <ConsultantCard key={c.id} consultant={c} />
+              <ConsultantCard key={c.id} consultant={c} bookingHref={`/our-team/${c.id}`} />
             ))}
           </div>
         )}
