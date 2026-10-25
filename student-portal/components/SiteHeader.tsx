@@ -101,6 +101,7 @@ export default function SiteHeader() {
     { href: "/our-team", label: "Our Team" },
     ...(user
       ? [
+          { href: "/applications", label: "My Applications" },
           { href: "/consultations", label: "My Sessions" },
           { href: "/saved", label: "Saved Items" },
         ]

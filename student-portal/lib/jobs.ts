@@ -70,11 +70,29 @@ export interface JobApplication {
   appliedAt: string;
 }
 
-/** Everything the student has applied to, so the board can mark those openings. */
-export async function fetchMyApplications(signal?: AbortSignal): Promise<JobApplication[]> {
+/**
+ * Where an application stands, as the student is told it. Deliberately coarse: the business's own
+ * statuses, scores and reasons never reach the student, and a rejection arrives as NotProgressing.
+ */
+export type ApplicationProgress = "Applied" | "UnderReview" | "Shortlisted" | "NotProgressing";
+
+/** One of the student's own applications, with the job it was for. */
+export interface MyApplication extends JobApplication {
+  specification: string;
+  companyName: string;
+  employmentType: string;
+  progress: ApplicationProgress;
+}
+
+/**
+ * Everything the student has applied to, newest first. The jobs board only needs the ids (to mark
+ * openings already applied to) and passes `silent` so that background lookup doesn't trigger the
+ * global loading overlay; the My applications page wants the overlay, so it passes false.
+ */
+export async function fetchMyApplications(signal?: AbortSignal, silent = true): Promise<MyApplication[]> {
   const res = await tracked(
     async () => fetch(`${API}/student/jobs/applications`, { headers: await authHeaders(), signal }),
-    true
+    silent
   );
   if (!res.ok) return throwApiError(res, "Couldn't load your applications.");
   return res.json();
