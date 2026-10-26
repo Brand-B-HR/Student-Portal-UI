@@ -45,7 +45,7 @@ export default function GlobalError({
             Something went wrong
           </p>
           <h1 style={{ marginTop: 12, fontSize: 28, fontWeight: 600 }}>
-            CareerBuild hit a snag
+            Stars hit a snag
           </h1>
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: "#7a655a" }}>
             The app failed to load. Try again, or reload the page.

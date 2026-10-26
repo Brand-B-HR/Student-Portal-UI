@@ -2,6 +2,8 @@
 
 import DOMPurify from "isomorphic-dompurify";
 import { API_BASE_URL } from "@/lib/config";
+import { optionalAuthHeaders } from "@/lib/http";
+import { tracked } from "@/lib/loading";
 
 // BlogController is versioned (`api/v{version}/...` alongside the unversioned
 // `api/...` alias) — call through v1 explicitly.
@@ -16,6 +18,16 @@ export interface Article {
   authorName?: string;
   createdAt: string;
   publishedAt?: string;
+  /** Totals, public — present for anonymous callers too. */
+  likeCount: number;
+  commentCount: number;
+  /**
+   * The caller's own state. Both come back false for an anonymous request, so
+   * the fetches below send a token whenever there is one — see
+   * optionalAuthHeaders.
+   */
+  likedByMe: boolean;
+  savedByMe: boolean;
 }
 
 export interface ArticleListResponse {
@@ -97,6 +109,19 @@ export function authorOf(article: Article): string {
   return article.authorName?.trim() || "CareerBuild";
 }
 
+/**
+ * Newest first, by publish date, falling back to createdAt for anything the
+ * admin portal hasn't stamped a publishedAt on.
+ *
+ * The list endpoint's ordering isn't part of its contract, so sections that
+ * claim recency sort here rather than trusting the order rows arrive in.
+ * Returns a new array — the caller's list is left alone.
+ */
+export function sortByRecency(articles: Article[]): Article[] {
+  const when = (a: Article) => +new Date(a.publishedAt ?? a.createdAt);
+  return [...articles].sort((a, b) => when(b) - when(a));
+}
+
 export function initialsOf(name: string): string {
   return name
     .split(/\s+/)
@@ -112,9 +137,11 @@ export async function fetchArticles(
   pageSize = 9,
   signal?: AbortSignal
 ): Promise<ArticleListResponse> {
-  const res = await fetch(
-    `${API}/blog/articles?page=${page}&pageSize=${pageSize}`,
-    { signal }
+  const res = await tracked(async () =>
+    fetch(`${API}/blog/articles?page=${page}&pageSize=${pageSize}`, {
+      signal,
+      headers: await optionalAuthHeaders(),
+    })
   );
   if (!res.ok) throw new Error("Failed to load articles");
   const data = await res.json();
@@ -122,7 +149,9 @@ export async function fetchArticles(
 }
 
 export async function fetchArticle(id: string, signal?: AbortSignal): Promise<Article> {
-  const res = await fetch(`${API}/blog/articles/${id}`, { signal });
+  const res = await tracked(async () =>
+    fetch(`${API}/blog/articles/${id}`, { signal, headers: await optionalAuthHeaders() })
+  );
   if (res.status === 404) throw new Error("not_found");
   if (!res.ok) throw new Error("failed");
   return res.json();

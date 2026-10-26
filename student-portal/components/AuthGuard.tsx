@@ -36,12 +36,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [router]);
 
-  if (checking)
-    return (
-      <div className="loading-screen">
-        <div className="spinner" />
-      </div>
-    );
+  // The bootstrap call above is tracked, so the global overlay already covers
+  // this wait — rendering a second spinner here would stack two of them.
+  if (checking) return null;
 
   return <>{children}</>;
 }

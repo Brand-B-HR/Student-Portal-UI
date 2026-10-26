@@ -1,10 +1,11 @@
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
+import PublicShell from "@/components/PublicShell";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-subtle px-5 py-20">
-      <Container size="narrow" className="text-center">
+    <PublicShell>
+      <Container size="narrow" className="py-20 text-center sm:py-28">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-500">
           404
         </p>
@@ -22,6 +23,6 @@ export default function NotFound() {
           </Button>
         </div>
       </Container>
-    </div>
+    </PublicShell>
   );
 }

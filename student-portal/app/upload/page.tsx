@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
+import { Spinner } from "@/components/LoadingOverlay";
 import { useRouter } from "next/navigation";
 import {
   getCvUploadUrl,
@@ -21,10 +22,7 @@ import {
   type CvEducationFields as Education,
 } from "@/lib/cvMapping";
 import { errorMessage as toErrorMessage } from "@/lib/errors";
-
-// Shared with the video-file check below, and with the "up to 20MB" copy
-// in the dropzone hints — keep those hints in sync if this changes.
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+import { checkCvFile, checkVideoFile } from "@/lib/uploads";
 
 interface ProfileData {
   student: {
@@ -111,13 +109,9 @@ export default function UploadPage() {
   function handlePdfFile(selectedFile: File | null) {
     if (!selectedFile) return;
 
-    if (selectedFile.type !== "application/pdf") {
-      setErrorMessage("Please upload a valid PDF CV document.");
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
-      setErrorMessage("File must be 20 MB or smaller.");
+    const problem = checkCvFile(selectedFile);
+    if (problem) {
+      setErrorMessage(problem);
       return;
     }
 
@@ -136,13 +130,9 @@ export default function UploadPage() {
   function handleVideoFile(selectedFile: File | null) {
     if (!selectedFile) return;
 
-    if (!selectedFile.type.startsWith("video/")) {
-      setErrorMessage("Please upload a valid Video file.");
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
-      setErrorMessage("File must be 20 MB or smaller.");
+    const problem = checkVideoFile(selectedFile);
+    if (problem) {
+      setErrorMessage(problem);
       return;
     }
 
@@ -537,9 +527,11 @@ export default function UploadPage() {
             {parsing ? (
               /* CV Extraction Loading Screen */
               <div className="flex-1 flex flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-sm">
+                {/* Uses the shared Spinner rather than the global overlay:
+                    extraction polls for up to a minute, and blocking the page
+                    for that long would be unusable. */}
                 <div className="relative flex h-20 w-20 items-center justify-center">
-                  <div className="absolute h-full w-full rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
-                  <div className="absolute h-12 w-12 rounded-full border-4 border-orange-50 border-t-orange-300 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }} />
+                  <Spinner className="absolute h-full w-full border-4" />
                   <span className="text-2xl">📄</span>
                 </div>
                 <h2 className="mt-6 text-lg font-bold text-forest-900">Extracting CV</h2>
